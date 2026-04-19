@@ -72,6 +72,35 @@ def get_tawalee_data():
     results.sort(key=lambda x: x['days'])
     return results[:3]
 
+def get_current_zodiac():
+    today = date.today()
+    # تعريف الأبراج بتواريخها (يوم/شهر) وأيقونات
+    zodiacs = [
+        ("الجدي", (1, 1), (1, 19), "♑️"),
+        ("الدلو", (1, 20), (2, 18), "♒️"),
+        ("الحوت", (2, 19), (3, 20), "♓️"),
+        ("الحمل", (3, 21), (4, 19), "♈️"),
+        ("الثور", (4, 20), (5, 20), "♉️"),
+        ("الجوزاء", (5, 21), (6, 20), "♊️"),
+        ("السرطان", (6, 21), (7, 22), "♋️"),
+        ("الأسد", (7, 23), (8, 22), "♌️"),
+        ("العذراء", (8, 23), (9, 22), "♍️"),
+        ("الميزان", (9, 23), (10, 22), "♎️"),
+        ("العقرب", (10, 23), (11, 21), "♏️"),
+        ("القوس", (11, 22), (12, 21), "♐️"),
+        ("الجدي", (12, 22), (12, 31), "♑️")  # الجدي يمتد لنهاية السنة
+    ]
+    current_month = today.month
+    current_day = today.day
+    for name, start, end, icon in zodiacs:
+        start_month, start_day = start
+        end_month, end_day = end
+        if (current_month == start_month and current_day >= start_day) or \
+           (current_month == end_month and current_day <= end_day) or \
+           (current_month > start_month and current_month < end_month):
+            return {"name": name, "icon": icon}
+    return {"name": "الجدي", "icon": "♑️"}  # افتراضي
+
 @st.cache_data(ttl=86400)
 def get_city_name_cached(lat, lon):
     try:
@@ -201,7 +230,6 @@ if prayer_times_data:
         'العشاء': prayer_times_data.get('Isha', '--:--')
     }
 
-# حساب الصلاة القادمة
 def get_next_prayer(prayer_dict, current_time):
     prayers = [
         ('الفجر', prayer_dict.get('الفجر')),
@@ -214,7 +242,6 @@ def get_next_prayer(prayer_dict, current_time):
     for name, time_str in prayers:
         if time_str and time_str > current_time_str:
             return name, time_str
-    # إذا لم يجد صلاة لاحقة، نأخذ الفجر لليوم التالي
     return 'الفجر', prayer_dict.get('الفجر', '--:--')
 
 next_prayer_name, next_prayer_time = get_next_prayer(prayer_dict, now) if prayer_dict else ('الفجر', '--:--')
@@ -223,6 +250,9 @@ prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 
 tawalee_list = get_tawalee_data()
 tawalee_json = json.dumps(tawalee_list, ensure_ascii=False)
+
+zodiac_data = get_current_zodiac()
+zodiac_json = json.dumps(zodiac_data, ensure_ascii=False)
 
 city_name = get_city_name_cached(st.session_state.lat, st.session_state.lon)
 
@@ -280,11 +310,11 @@ html_code = f"""
             width: 90%;
             max-width: 500px;
             z-index: 1;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.125); /* شفافية 25% من 0.5 */
             backdrop-filter: blur(8px);
             border-radius: 40px;
-            border: 1px solid rgba(255,255,255,0.3);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             overflow: hidden;
         }}
 
@@ -292,7 +322,7 @@ html_code = f"""
             width: 100%;
             height: auto;
             display: block;
-            opacity: 0.5;
+            opacity: 0.25; /* شفافية 25% (نصف 50%) */
             mix-blend-mode: normal;
             filter: none;
         }}
@@ -412,26 +442,28 @@ html_code = f"""
             font-size: 1.1rem;
         }}
 
-        /* بطاقات الطواليع والمدينة */
-        .tawalee-container {{
+        /* حاوية الطواليع + البرج (4 بطاقات) */
+        .tawalee-zodiac-container {{
             display: flex;
-            justify-content: center;
+            flex-direction: row;
+            justify-content: space-between;
             align-items: stretch;
             gap: 6px;
+            width: 100%;
             margin-top: 8px;
-            flex-wrap: wrap;
         }}
-        .tawalee-item {{
+        .tawalee-item, .zodiac-item {{
             background: rgba(0,0,0,0.3);
             backdrop-filter: blur(5px);
-            padding: 6px 10px;
+            padding: 6px 4px;
             border-radius: 30px;
             border: 1px solid rgba(255,255,255,0.2);
             text-align: center;
-            min-width: 80px;
+            flex: 1;
+            min-width: 0;
         }}
-        .tawalee-icon {{ font-size: 1.4rem; display: block; }}
-        .tawalee-name {{ font-weight: bold; font-size: 0.9rem; }}
+        .tawalee-icon, .zodiac-icon {{ font-size: 1.4rem; display: block; }}
+        .tawalee-name, .zodiac-name {{ font-weight: bold; font-size: 0.9rem; }}
         .tawalee-days {{ font-size: 0.8rem; opacity: 0.9; }}
 
         .city-card {{
@@ -480,7 +512,8 @@ html_code = f"""
             .prayer-name {{ font-size: 1rem; }}
             .prayer-time {{ font-size: 1.2rem; }}
             .weather-value {{ font-size: 1rem; }}
-            .tawalee-item {{ min-width: 70px; padding: 5px 6px; }}
+            .tawalee-item, .zodiac-item {{ padding: 4px 2px; }}
+            .tawalee-name, .zodiac-name {{ font-size: 0.8rem; }}
             .city-card {{ min-width: 80px; }}
         }}
     </style>
@@ -503,7 +536,6 @@ html_code = f"""
 
         <!-- صف البطاقات الثلاث: اليوم، الصلاة، الطقس -->
         <div class="cards-grid">
-            <!-- بطاقة اليوم (يمين) -->
             <div class="card date-card">
                 <div class="day-ar">{day_ar}</div>
                 <div class="day-en">{day_en}</div>
@@ -511,14 +543,12 @@ html_code = f"""
                 <div class="miladi-date">{mil_str}</div>
             </div>
 
-            <!-- بطاقة الصلاة القادمة (وسط) -->
             <div class="card prayer-card">
                 <div class="prayer-icon">🕌</div>
                 <div class="prayer-name">{next_prayer_name}</div>
                 <div class="prayer-time">{next_prayer_time}</div>
             </div>
 
-            <!-- بطاقة الطقس (يسار) -->
             <div class="card weather-card">
                 <div class="weather-row">
                     <span class="weather-label">🌡️ الحرارة</span>
@@ -535,8 +565,11 @@ html_code = f"""
             </div>
         </div>
 
-        <!-- بطاقات الطواليع -->
-        <div id="tawalee-container" class="tawalee-container"></div>
+        <!-- صف الطواليع + البرج (4 بطاقات) -->
+        <div id="tawalee-zodiac-container" class="tawalee-zodiac-container">
+            <!-- الطواليع الثلاثة ستضاف هنا بواسطة JS -->
+            <!-- بطاقة البرج ستضاف هنا أيضًا -->
+        </div>
 
         <!-- بطاقة المدينة -->
         <div class="city-card">
@@ -555,10 +588,13 @@ html_code = f"""
         const prayerTimes = {prayer_json};
         const TIMEZONE = 'Asia/Riyadh';
         const tawaleeData = {tawalee_json};
+        const zodiacData = {zodiac_json};
 
-        function renderTawalee() {{
-            const container = document.getElementById('tawalee-container');
+        function renderTawaleeAndZodiac() {{
+            const container = document.getElementById('tawalee-zodiac-container');
             container.innerHTML = '';
+            
+            // إضافة بطاقات الطواليع الثلاث (من اليمين)
             tawaleeData.forEach(item => {{
                 const div = document.createElement('div');
                 div.className = 'tawalee-item';
@@ -569,6 +605,16 @@ html_code = f"""
                 `;
                 container.appendChild(div);
             }});
+
+            // إضافة بطاقة البرج (أقصى اليسار)
+            const zodiacDiv = document.createElement('div');
+            zodiacDiv.className = 'zodiac-item';
+            zodiacDiv.innerHTML = `
+                <span class="zodiac-icon">${{zodiacData.icon}}</span>
+                <div class="zodiac-name">${{zodiacData.name}}</div>
+                <div class="tawalee-days">برجك اليوم</div>
+            `;
+            container.appendChild(zodiacDiv);
         }}
 
         function updateClock() {{
@@ -605,7 +651,7 @@ html_code = f"""
             setTimeout(() => {{ location.reload(); }}, timeUntilMidnight);
         }}
 
-        renderTawalee();
+        renderTawaleeAndZodiac();
         updateClock();
         setInterval(updateClock, 1000);
         scheduleMidnightRefresh();
