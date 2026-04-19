@@ -6,7 +6,6 @@ import requests
 from hijri_converter import Gregorian
 import json
 import base64
-import time
 
 st.set_page_config(page_title="ساعة الأرض - aale1164", layout="wide")
 
@@ -75,10 +74,9 @@ def get_tawalee_data():
 
 @st.cache_data(ttl=86400)
 def get_city_name_cached(lat, lon):
-    # محاولة أولى مع Nominatim
     try:
         url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&accept-language=ar"
-        headers = {'User-Agent': 'FlatEarthClock/1.0 (aale1164@gmail.com)'}
+        headers = {'User-Agent': 'FlatEarthClock/1.0'}
         resp = requests.get(url, headers=headers, timeout=5)
         if resp.status_code == 200:
             data = resp.json()
@@ -88,7 +86,6 @@ def get_city_name_cached(lat, lon):
                 return city
     except:
         pass
-    # محاولة احتياطية مع geocode.xyz
     try:
         url = f"https://geocode.xyz/{lat},{lon}?json=1"
         resp = requests.get(url, timeout=5)
@@ -259,12 +256,11 @@ html_code = f"""
 
         .video-card {{
             position: absolute;
-            top: 5%;
+            top: 2%;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
             max-width: 500px;
-            height: auto;
             z-index: 1;
             background: rgba(0,0,0,0.2);
             backdrop-filter: blur(8px);
@@ -302,7 +298,7 @@ html_code = f"""
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 2vh 16px 0 16px;
+            padding: 38vh 16px 0 16px;
             margin: 0 auto;
             color: white;
             pointer-events: none;
@@ -324,9 +320,7 @@ html_code = f"""
 
         .time-card {{
             margin-bottom: 5px;
-            margin-top: 5px;
-            position: relative;
-            top: -10px;
+            margin-top: 0;
         }}
         .time-display {{
             font-size: clamp(2.5rem, 12vw, 4.5rem);
@@ -405,7 +399,6 @@ html_code = f"""
         .tawalee-name {{ font-weight: bold; font-size: 0.9rem; }}
         .tawalee-days {{ font-size: 0.8rem; opacity: 0.9; }}
 
-        /* بطاقة المدينة */
         .city-card {{
             background: rgba(0,0,0,0.3);
             backdrop-filter: blur(5px);
@@ -443,7 +436,7 @@ html_code = f"""
         }}
 
         @media (max-width: 480px) {{
-            .main-container {{ padding: 2vh 10px 0 10px; }}
+            .main-container {{ padding: 38vh 10px 0 10px; }}
             .time-display {{ font-size: 2.2rem; }}
             .ampm-display {{ font-size: 1.8rem; }}
             .cards-grid {{ gap: 5px; }}
