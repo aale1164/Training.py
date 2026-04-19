@@ -6,7 +6,416 @@ import requests
 from hijri_converter import Gregorian
 import json
 import base64
+import streamlit as st
+import streamlit.components.v1 as components
+import pytz
+from datetime import datetime, date, timedelta
+import requests
+from hijri_converter import Gregorian
+import json
+import base64
 
+st.set_page_config(page_title="ساعة الأرض - aale1164", layout="wide")
+
+try:
+    from streamlit_js_eval import get_geolocation
+    GEO_LIB_AVAILABLE = True
+except ImportError:
+    GEO_LIB_AVAILABLE = False
+
+sa_tz = pytz.timezone('Asia/Riyadh')
+
+@st.cache_data(ttl=600)
+def fetch_weather_cached(lat, lon):
+    try:
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+        resp = requests.get(url, timeout=5).json()
+        return resp['current_weather']['temperature']
+    except:
+        return None
+
+@st.cache_data(ttl=3600)
+def fetch_prayer_times_cached(lat, lon, date_str):
+    try:
+        url = f"https://api.aladhan.com/v1/timings/{date_str}"
+        params = {'latitude': lat, 'longitude': lon, 'method': 4, 'school': 0}
+        response = requests.get(url, params=params, timeout=10)
+        data = response.json()
+        if data['code'] == 200:
+            timings = data['data']['timings']
+            return {
+                'Fajr': timings['Fajr'],
+                'Sunrise': timings['Sunrise'],
+                'Dhuhr': timings['Dhuhr'],
+                'Asr': timings['Asr'],
+                'Maghrib': timings['Maghrib'],
+                'Isha': timings['Isha'],
+            }
+    except:
+        pass
+    return None
+
+def get_season_data():
+    today = date.today()
+    y = today.year
+    seasons = [
+        ('الربيع', 'Spring', date(y, 3, 21), '🌸'),
+        ('الصيف', 'Summer', date(y, 6, 21), '☀️'),
+        ('الخريف', 'Autumn', date(y, 9, 23), '🍂'),
+        ('الشتاء', 'Winter', date(y, 12, 21), '❄️')
+    ]
+    for ar, en, s_date, icon in seasons:
+        if s_date > today:
+            return ar, en, (s_date - today).days, icon
+    next_spring = date(y + 1, 3, 21)
+    return 'الربيع', 'Spring', (next_spring - today).days, '🌸'
+
+@st.cache_data
+def get_video_base64(video_path):
+    try:
+        with open(video_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except:
+        return None
+
+if 'lat' not in st.session_state:
+    st.session_state.lat, st.session_state.lon = 26.32, 43.97
+    st.session_state.location_checked = False
+
+if not st.session_state.location_checked and GEO_LIB_AVAILABLE:
+    st.markdown("""
+    <style>
+        .stApp { background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png") center/cover fixed; }
+        .permission-box {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; color: white; text-shadow: 2px 2px 5px black; text-align: center;
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); padding: 20px;
+        }
+        .permission-box button {
+            padding: 15px 30px; font-size: 20px; background: #FFA500; color: black;
+            border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
+            margin-top: 20px; transition: 0.3s;
+        }
+        .permission-box button:hover { background: #FFD700; transform: scale(1.05); }
+    </style>
+    <div class="permission-box">
+        <h1>🌍 أهلاً بك</h1>
+        <p style="font-size: 18px;">هذا التطبيق نسخة تجريبية، شاركونا آرائكم واقتراحاتكم</p>
+        <p style="font-size: 18px;">لكي نجعله يتناسب مع احتياجاتكم</p>
+        <p style="font-size: 16px; margin-top: 15px;">من خلال الضغط على وسائل التواصل في الصفحة التالية في جهة اليمين</p>
+        <p style="font-size: 18px; margin-top: 25px;">دمتم بخير، أخوكم / عدناني</p>
+        <p style="font-size: 16px; margin-top: 30px;">للحصول على مواقيت الصلاة والطقس بدقة، نرجو الموافقة على مشاركة موقعك.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        if st.button("📍 مشاركة الموقع", type="primary", use_container_width=True):
+            try:
+                loc = get_geolocation()
+                if loc and 'coords' in loc:
+                    st.session_state.lat = loc['coords']['latitude']
+                    st.session_state.lon = loc['coords']['longitude']
+                else:
+                    st.warning("تعذر الحصول على الموقع. سيتم استخدام الموقع الافتراضي.")
+                st.session_state.location_checked = True
+                st.rerun()
+            except Exception as e:
+                st.error(f"حدث خطأ: {e}")
+                st.session_state.location_checked = True
+                st.rerun()
+    st.stop()
+
+if not st.session_state.location_checked:
+    st.session_state.location_checked = True
+
+now = datetime.now(sa_tz)
+today = now.date()
+
+weekdays_ar = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
+weekdays_en = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+day_ar = weekdays_ar[today.weekday()]
+day_en = weekdays_en[today.weekday()]
+
+try:
+    h = Gregorian.fromdate(today).to_hijri()
+    hij_str = f"{h.day}/{h.month}/{h.year} هـ"
+except:
+    hij_str = "--/--/---- هـ"
+mil_str = f"{today.day}/{today.month}/{today.year} م"
+
+temp = fetch_weather_cached(st.session_state.lat, st.session_state.lon)
+weather_str = f"{temp}°C" if temp is not None else "--°C"
+
+prayer_times_data = fetch_prayer_times_cached(st.session_state.lat, st.session_state.lon, today.strftime("%d-%m-%Y"))
+sunrise = sunset = "--:--"
+prayer_dict = {}
+if prayer_times_data:
+    sunrise = prayer_times_data.get('Sunrise', '--:--')
+    sunset = prayer_times_data.get('Maghrib', '--:--')
+    prayer_dict = {
+        'الفجر': prayer_times_data.get('Fajr', '--:--'),
+        'الظهر': prayer_times_data.get('Dhuhr', '--:--'),
+        'العصر': prayer_times_data.get('Asr', '--:--'),
+        'المغرب': prayer_times_data.get('Maghrib', '--:--'),
+        'العشاء': prayer_times_data.get('Isha', '--:--')
+    }
+
+season_ar, season_en, days_left, season_icon = get_season_data()
+prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
+
+video_path = "ARRR1.mp4"
+video_base64 = get_video_base64(video_path)
+
+html_code = f"""
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        html, body {{
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Tajawal', sans-serif;
+        }}
+
+        .background-container {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background-color: black;
+        }}
+
+        #bgVideo {{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 135px;
+            height: 240px;
+            object-fit: cover;
+            transform: translate(-50%, -50%);
+            filter: brightness(0.5);
+        }}
+
+        .bg-image {{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 135px;
+            height: 240px;
+            background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
+            background-size: cover;
+            background-position: center 40%;
+            transform: translate(-50%, -50%);
+            filter: brightness(0.8);
+        }}
+
+        .main-container {{
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 5vh 16px 0 16px;
+            margin: 0 auto;
+            color: white;
+        }}
+
+        .text-shadow {{
+            text-shadow: 2px 2px 12px rgba(0,0,0,0.8);
+            text-align: center;
+            margin: 0;
+            line-height: 1.3;
+        }}
+
+        .time-container {{
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 5px;
+        }}
+        .time-display {{
+            font-size: clamp(3.2rem, 14vw, 6rem);
+            font-weight: 900;
+            line-height: 1;
+        }}
+        .ampm-display {{
+            font-size: clamp(2rem, 8vw, 4rem);
+            margin-right: 8px;
+            color: #FFD966;
+            font-weight: 700;
+        }}
+
+        .season-main {{
+            font-size: clamp(1.5rem, 6vw, 2.4rem);
+            font-weight: 700;
+            margin-top: 15px;
+            color: #B5FFB5;
+        }}
+        .season-main-sub {{
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            opacity: 0.85;
+            font-weight: 400;
+            display: block;
+            margin-top: 2px;
+        }}
+
+        .info-row {{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: stretch;
+            width: 100%;
+            margin-top: 20px;
+            gap: 15px;
+        }}
+        .info-col {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            text-align: center;
+        }}
+        .right-col {{ padding-left: 8%; }}
+        .left-col {{ padding-right: 8%; }}
+
+        .day-ar {{ font-size: clamp(1.8rem, 7vw, 2.8rem); font-weight: 900; }}
+        .day-en {{ font-size: clamp(1.1rem, 4.5vw, 1.8rem); opacity: 0.85; margin-top: 2px; }}
+        .hijri-date {{ font-size: clamp(1.3rem, 5.5vw, 2rem); font-weight: 700; margin-top: 10px; }}
+        .miladi-date {{ font-size: clamp(1rem, 4.5vw, 1.6rem); opacity: 0.85; margin-top: 3px; }}
+
+        .social-links-vertical {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+        }}
+        .social-links-vertical a {{
+            color: white;
+            text-decoration: none;
+            font-size: clamp(0.9rem, 4vw, 1.3rem);
+            font-weight: bold;
+            text-shadow: 2px 2px 8px black;
+            transition: 0.2s;
+        }}
+        .social-links-vertical a:hover {{
+            color: #FFD966;
+            transform: scale(1.05);
+        }}
+
+        .weather-item {{ margin: 8px 0; }}
+        .weather-title {{ font-size: clamp(1.2rem, 5vw, 1.8rem); font-weight: bold; }}
+        .weather-value {{ font-size: clamp(1rem, 4.5vw, 1.5rem); margin-top: 3px; }}
+        .weather-label {{ font-size: clamp(0.8rem, 3.5vw, 1.1rem); opacity: 0.7; display: block; margin-top: 2px; }}
+
+        @media (max-width: 480px) {{
+            .main-container {{ padding: 4vh 12px 0 12px; }}
+            .info-row {{ gap: 8px; }}
+            .right-col {{ padding-left: 5%; }}
+            .left-col {{ padding-right: 5%; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else '<div class="bg-image"></div>'}
+    </div>
+
+    <div class="main-container">
+        <div class="text-shadow time-container">
+            <span id="live-time" class="time-display">--:--:--</span>
+            <span id="live-ampm" class="ampm-display"></span>
+        </div>
+
+        <div class="text-shadow season-main">
+            {season_icon} متبقي على {season_ar}: {days_left} يوم
+            <span class="season-main-sub">{days_left} days left for {season_en}</span>
+        </div>
+
+        <div class="info-row">
+            <div class="info-col right-col">
+                <div class="text-shadow day-ar">{day_ar}</div>
+                <div class="text-shadow day-en">{day_en}</div>
+                <div class="text-shadow hijri-date">{hij_str}</div>
+                <div class="text-shadow miladi-date">{mil_str}</div>
+                <div class="social-links-vertical">
+                    <a href="https://twitter.com/aale1164" target="_blank">𝕏 @aale1164</a>
+                    <a href="https://www.snapchat.com/add/aale112" target="_blank">👻 aale112</a>
+                </div>
+            </div>
+
+            <div class="info-col left-col">
+                <div class="weather-item">
+                    <div class="text-shadow weather-title">🌡️ {weather_str}</div>
+                    <div class="text-shadow weather-label">Temp</div>
+                </div>
+                <div class="weather-item">
+                    <div class="text-shadow weather-title">☀️ الشروق</div>
+                    <div class="text-shadow weather-value">{sunrise}</div>
+                    <div class="text-shadow weather-label">Sunrise</div>
+                </div>
+                <div class="weather-item">
+                    <div class="text-shadow weather-title">🌅 الغروب</div>
+                    <div class="text-shadow weather-value">{sunset}</div>
+                    <div class="text-shadow weather-label">Sunset</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const prayerTimes = {prayer_json};
+        const TIMEZONE = 'Asia/Riyadh';
+
+        function updateClock() {{
+            const now = new Date();
+            const formatter = new Intl.DateTimeFormat('en-US', {{
+                timeZone: TIMEZONE,
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: false
+            }});
+            const parts = formatter.formatToParts(now);
+            const timeObj = {{}};
+            parts.forEach(p => {{ timeObj[p.type] = p.value; }});
+
+            let hour = parseInt(timeObj.hour);
+            const minute = parseInt(timeObj.minute);
+            const second = parseInt(timeObj.second);
+
+            const hour12 = hour % 12 || 12;
+            const ampmEn = hour >= 12 ? 'PM' : 'AM';
+
+            document.getElementById('live-time').textContent = 
+                `${{hour12}}:${{minute.toString().padStart(2, '0')}}:${{second.toString().padStart(2, '0')}}`;
+            document.getElementById('live-ampm').textContent = ampmEn;
+        }}
+
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
+"""
+
+components.html(html_code, height=950, scrolling=False)
 # --- إعداد الصفحة ---
 st.set_page_config(page_title="ساعة الأرض - aale1164", layout="wide")
 
