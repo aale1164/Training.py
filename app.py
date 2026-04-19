@@ -272,136 +272,148 @@ html_code = f"""
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 5vh 16px 0 16px;
+            padding: 4vh 16px 0 16px;
             margin: 0 auto;
             color: white;
         }}
 
-        .text-shadow {{
-            text-shadow: 2px 2px 12px rgba(0,0,0,0.8);
+        /* نمط البطاقة الموحد */
+        .card {{
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 20px;
             text-align: center;
-            margin: 0;
-            line-height: 1.3;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }}
 
-        .time-container {{
-            display: flex;
-            align-items: baseline;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 5px;
+        .time-card {{
+            margin-bottom: 15px;
         }}
         .time-display {{
-            font-size: clamp(2.8rem, 12vw, 5rem);
+            font-size: clamp(2.5rem, 12vw, 4.5rem);
             font-weight: 900;
             line-height: 1;
+            display: inline-block;
         }}
         .ampm-display {{
-            font-size: clamp(2.8rem, 12vw, 5rem);
+            font-size: clamp(2rem, 8vw, 3.5rem);
             margin-right: 8px;
             color: white;
             font-weight: 700;
+            display: inline-block;
         }}
 
         .season-main {{
-            font-size: clamp(1.5rem, 6vw, 2.4rem);
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
             font-weight: 700;
-            margin-top: 15px;
+            margin: 15px 0 10px;
             color: #B5FFB5;
+            text-shadow: 2px 2px 8px black;
         }}
         .season-main-sub {{
-            font-size: clamp(1rem, 4vw, 1.5rem);
-            opacity: 0.85;
+            font-size: clamp(0.9rem, 3.5vw, 1.2rem);
+            opacity: 0.9;
             font-weight: 400;
             display: block;
-            margin-top: 2px;
         }}
 
+        /* حاوية البطاقات (شبكة مرنة) */
+        .cards-grid {{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            margin-top: 5px;
+        }}
+
+        /* بطاقة التاريخ */
+        .date-card {{
+            flex: 1 1 140px;
+            min-width: 130px;
+        }}
+        .day-ar {{ font-size: 1.6rem; font-weight: 900; }}
+        .day-en {{ font-size: 1rem; opacity: 0.9; }}
+        .hijri-date {{ font-size: 1.2rem; font-weight: 700; margin-top: 5px; }}
+        .miladi-date {{ font-size: 1rem; opacity: 0.9; }}
+
+        /* بطاقة الطقس */
+        .weather-card {{
+            flex: 1 1 180px;
+            min-width: 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }}
+        .weather-row {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5px;
+        }}
+        .weather-label {{
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }}
+        .weather-value {{
+            font-weight: bold;
+            font-size: 1.2rem;
+        }}
+
+        /* بطاقات الطواليع */
         .tawalee-container {{
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 10px;
             margin-top: 15px;
             flex-wrap: wrap;
         }}
         .tawalee-item {{
             background: rgba(0,0,0,0.3);
             backdrop-filter: blur(5px);
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 30px;
             border: 1px solid rgba(255,255,255,0.2);
             text-align: center;
-            min-width: 100px;
+            min-width: 90px;
         }}
-        .tawalee-icon {{
-            font-size: 1.8rem;
-            display: block;
-        }}
-        .tawalee-name {{
-            font-weight: bold;
-            font-size: 1rem;
-        }}
-        .tawalee-days {{
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }}
+        .tawalee-icon {{ font-size: 1.6rem; display: block; }}
+        .tawalee-name {{ font-weight: bold; font-size: 1rem; }}
+        .tawalee-days {{ font-size: 0.9rem; opacity: 0.9; }}
 
-        .info-row {{
+        /* روابط التواصل */
+        .social-footer {{
+            margin-top: auto;
+            padding-bottom: 20px;
             display: flex;
-            flex-direction: row;
-            justify-content: space-around;
-            align-items: stretch;
-            width: 100%;
-            margin-top: 20px;
             gap: 15px;
+            justify-content: center;
         }}
-        .info-col {{
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            text-align: center;
-        }}
-        .right-col {{ padding-left: 8%; }}
-        .left-col {{ padding-right: 8%; }}
-
-        .day-ar {{ font-size: clamp(1.8rem, 7vw, 2.8rem); font-weight: 900; }}
-        .day-en {{ font-size: clamp(1.1rem, 4.5vw, 1.8rem); opacity: 0.85; margin-top: 2px; }}
-        .hijri-date {{ font-size: clamp(1.3rem, 5.5vw, 2rem); font-weight: 700; margin-top: 10px; }}
-        .miladi-date {{ font-size: clamp(1rem, 4.5vw, 1.6rem); opacity: 0.85; margin-top: 3px; }}
-
-        .social-links-vertical {{
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            margin-top: 20px;
-        }}
-        .social-links-vertical a {{
+        .social-footer a {{
             color: white;
             text-decoration: none;
-            font-size: clamp(0.9rem, 4vw, 1.3rem);
+            font-size: 1rem;
             font-weight: bold;
-            text-shadow: 2px 2px 8px black;
+            padding: 8px 18px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px);
             transition: 0.2s;
         }}
-        .social-links-vertical a:hover {{
-            color: #FFD966;
-            transform: scale(1.05);
+        .social-footer a:hover {{
+            background: rgba(255,165,0,0.6);
         }}
 
-        .weather-item {{ margin: 8px 0; }}
-        .weather-title {{ font-size: clamp(1.2rem, 5vw, 1.8rem); font-weight: bold; }}
-        .weather-value {{ font-size: clamp(1rem, 4.5vw, 1.5rem); margin-top: 3px; }}
-        .weather-label {{ font-size: clamp(0.8rem, 3.5vw, 1.1rem); opacity: 0.7; display: block; margin-top: 2px; }}
-
         @media (max-width: 480px) {{
-            .main-container {{ padding: 4vh 12px 0 12px; }}
-            .info-row {{ gap: 8px; }}
-            .right-col {{ padding-left: 5%; }}
-            .left-col {{ padding-right: 5%; }}
-            .tawalee-item {{ min-width: 80px; padding: 6px 10px; }}
+            .main-container {{ padding: 3vh 12px 0 12px; }}
+            .time-display {{ font-size: 2.2rem; }}
+            .ampm-display {{ font-size: 1.8rem; }}
+            .cards-grid {{ gap: 8px; }}
+            .date-card, .weather-card {{ min-width: 120px; }}
+            .day-ar {{ font-size: 1.4rem; }}
         }}
     </style>
 </head>
@@ -413,48 +425,52 @@ html_code = f"""
     </div>
 
     <div class="main-container">
-        <div class="text-shadow time-container">
+        <!-- بطاقة الوقت -->
+        <div class="card time-card">
             <span id="live-time" class="time-display">--:--:--</span>
             <span id="live-ampm" class="ampm-display"></span>
         </div>
 
-        <div class="text-shadow season-main">
+        <!-- متبقي على الفصل -->
+        <div class="season-main">
             {season_icon} متبقي على {season_ar}: {days_left} يوم
             <span class="season-main-sub">{days_left} days left for {season_en}</span>
         </div>
 
-        <div id="tawalee-container" class="tawalee-container">
-            <!-- يتم ملؤها ديناميكياً -->
+        <!-- شبكة البطاقات: التاريخ والطقس -->
+        <div class="cards-grid">
+            <!-- بطاقة اليوم والتاريخ -->
+            <div class="card date-card">
+                <div class="day-ar">{day_ar}</div>
+                <div class="day-en">{day_en}</div>
+                <div class="hijri-date">{hij_str}</div>
+                <div class="miladi-date">{mil_str}</div>
+            </div>
+
+            <!-- بطاقة الطقس والشروق والغروب -->
+            <div class="card weather-card">
+                <div class="weather-row">
+                    <span class="weather-label">🌡️ الحرارة</span>
+                    <span class="weather-value">{weather_str}</span>
+                </div>
+                <div class="weather-row">
+                    <span class="weather-label">☀️ الشروق</span>
+                    <span class="weather-value">{sunrise}</span>
+                </div>
+                <div class="weather-row">
+                    <span class="weather-label">🌅 الغروب</span>
+                    <span class="weather-value">{sunset}</span>
+                </div>
+            </div>
         </div>
 
-        <div class="info-row">
-            <div class="info-col right-col">
-                <div class="text-shadow day-ar">{day_ar}</div>
-                <div class="text-shadow day-en">{day_en}</div>
-                <div class="text-shadow hijri-date">{hij_str}</div>
-                <div class="text-shadow miladi-date">{mil_str}</div>
-                <div class="social-links-vertical">
-                    <a href="https://twitter.com/aale1164" target="_blank">𝕏 @aale1164</a>
-                    <a href="https://www.snapchat.com/add/aale112" target="_blank">👻 aale112</a>
-                </div>
-            </div>
+        <!-- بطاقات الطواليع -->
+        <div id="tawalee-container" class="tawalee-container"></div>
 
-            <div class="info-col left-col">
-                <div class="weather-item">
-                    <div class="text-shadow weather-title">🌡️ {weather_str}</div>
-                    <div class="text-shadow weather-label">Temp</div>
-                </div>
-                <div class="weather-item">
-                    <div class="text-shadow weather-title">☀️ الشروق</div>
-                    <div class="text-shadow weather-value">{sunrise}</div>
-                    <div class="text-shadow weather-label">Sunrise</div>
-                </div>
-                <div class="weather-item">
-                    <div class="text-shadow weather-title">🌅 الغروب</div>
-                    <div class="text-shadow weather-value">{sunset}</div>
-                    <div class="text-shadow weather-label">Sunset</div>
-                </div>
-            </div>
+        <!-- روابط التواصل -->
+        <div class="social-footer">
+            <a href="https://twitter.com/aale1164" target="_blank">𝕏 @aale1164</a>
+            <a href="https://www.snapchat.com/add/aale112" target="_blank">👻 aale112</a>
         </div>
     </div>
 
@@ -507,11 +523,9 @@ html_code = f"""
             const now = new Date();
             const nextMidnight = new Date(now);
             nextMidnight.setDate(now.getDate() + 1);
-            nextMidnight.setHours(0, 0, 5, 0); // إعادة تحميل بعد 5 ثوانٍ من منتصف الليل
+            nextMidnight.setHours(0, 0, 5, 0);
             const timeUntilMidnight = nextMidnight - now;
-            setTimeout(() => {{
-                location.reload();
-            }}, timeUntilMidnight);
+            setTimeout(() => {{ location.reload(); }}, timeUntilMidnight);
         }}
 
         renderTawalee();
