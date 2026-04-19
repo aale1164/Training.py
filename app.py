@@ -36,7 +36,7 @@ def fetch_prayer_times_cached(lat, lon, date_str):
         params = {
             'latitude': lat,
             'longitude': lon,
-            'method': 4,  # مكة المكرمة
+            'method': 4,
             'school': 0,
         }
         response = requests.get(url, params=params, timeout=10)
@@ -70,7 +70,6 @@ def get_season_data():
     next_spring = date(y + 1, 3, 21)
     return 'الربيع', 'Spring', (next_spring - today).days, '🌸'
 
-# --- دالة لتحويل الفيديو إلى Base64 ---
 @st.cache_data
 def get_video_base64(video_path):
     try:
@@ -85,7 +84,6 @@ if 'lat' not in st.session_state:
     st.session_state.lat, st.session_state.lon = 26.32, 43.97
     st.session_state.location_checked = False
 
-# --- صفحة طلب إذن الموقع ---
 if not st.session_state.location_checked and GEO_LIB_AVAILABLE:
     st.markdown("""
     <style>
@@ -133,7 +131,6 @@ if not st.session_state.location_checked and GEO_LIB_AVAILABLE:
 if not st.session_state.location_checked:
     st.session_state.location_checked = True
 
-# --- البيانات الأساسية ---
 now = datetime.now(sa_tz)
 today = now.date()
 
@@ -169,11 +166,9 @@ if prayer_times_data:
 season_ar, season_en, days_left, season_icon = get_season_data()
 prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 
-# --- معالجة الفيديو (ARRR1.mp4) ---
 video_path = "ARRR1.mp4"
 video_base64 = get_video_base64(video_path)
 
-# --- HTML + CSS (الأبعاد الجديدة: 270x480) ---
 html_code = f"""
 <!DOCTYPE html>
 <html dir="rtl">
@@ -190,7 +185,6 @@ html_code = f"""
             font-family: 'Tajawal', sans-serif;
         }}
 
-        /* حاوية الخلفية */
         .background-container {{
             position: fixed;
             top: 0;
@@ -202,7 +196,6 @@ html_code = f"""
             background-color: black;
         }}
 
-        /* الفيديو: أبعاد 270x480 ثم تغطية الشاشة */
         #bgVideo {{
             position: absolute;
             top: 50%;
@@ -212,13 +205,8 @@ html_code = f"""
             object-fit: cover;
             transform: translate(-50%, -50%);
             filter: brightness(0.5);
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
         }}
 
-        /* صورة احتياطية بنفس الأبعاد */
         .bg-image {{
             position: absolute;
             top: 50%;
@@ -230,13 +218,8 @@ html_code = f"""
             background-position: center 40%;
             transform: translate(-50%, -50%);
             filter: brightness(0.8);
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
         }}
 
-        /* محتوى الواجهة */
         .main-container {{
             position: relative;
             z-index: 1;
