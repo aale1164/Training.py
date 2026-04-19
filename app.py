@@ -71,6 +71,15 @@ def get_video_base64(video_path):
     except:
         return None
 
+@st.cache_data
+def get_image_base64(image_path):
+    try:
+        with open(image_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except:
+        return None
+
 if 'lat' not in st.session_state:
     st.session_state.lat, st.session_state.lon = 26.32, 43.97
     st.session_state.location_checked = False
@@ -160,6 +169,9 @@ prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 video_path = "ARRR1.mp4"
 video_base64 = get_video_base64(video_path)
 
+image_path = "TTTT1.jpg"
+image_base64 = get_image_base64(image_path)
+
 html_code = f"""
 <!DOCTYPE html>
 <html dir="rtl">
@@ -187,6 +199,19 @@ html_code = f"""
             background-color: black;
         }}
 
+        /* طبقة الصورة الخلفية (شفافة 50%) */
+        #bgImageLayer {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.5;
+            z-index: 0;
+        }}
+
+        /* الفيديو فوق الصورة */
         #bgVideo {{
             position: absolute;
             top: 0;
@@ -196,7 +221,8 @@ html_code = f"""
             object-fit: contain;
             transform: translateX(-50%);
             filter: brightness(0.7);
-            background-color: black;
+            background-color: transparent;
+            z-index: 1;
         }}
 
         #watermark-cover {{
@@ -206,11 +232,11 @@ html_code = f"""
             width: 120px;
             height: 40px;
             background-color: black;
-            z-index: 0;
+            z-index: 2;
             opacity: 1;
         }}
 
-        .bg-image {{
+        .bg-image-fallback {{
             position: absolute;
             top: 0;
             left: 50%;
@@ -223,11 +249,12 @@ html_code = f"""
             transform: translateX(-50%);
             filter: brightness(0.8);
             background-color: black;
+            z-index: 1;
         }}
 
         .main-container {{
             position: relative;
-            z-index: 1;
+            z-index: 3;
             width: 100%;
             max-width: 600px;
             height: 100%;
@@ -340,7 +367,13 @@ html_code = f"""
 </head>
 <body>
     <div class="background-container">
-        {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else '<div class="bg-image"></div>'}
+        <!-- الصورة الخلفية الثابتة بشفافية 50% -->
+        {f'<img id="bgImageLayer" src="data:image/jpeg;base64,{image_base64}" alt="Background">' if image_base64 else ''}
+        
+        <!-- الفيديو -->
+        {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else '<div class="bg-image-fallback"></div>'}
+        
+        <!-- غطاء العلامة المائية -->
         <div id="watermark-cover"></div>
     </div>
 
