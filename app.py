@@ -201,6 +201,24 @@ if prayer_times_data:
         'العشاء': prayer_times_data.get('Isha', '--:--')
     }
 
+# حساب الصلاة القادمة
+def get_next_prayer(prayer_dict, current_time):
+    prayers = [
+        ('الفجر', prayer_dict.get('الفجر')),
+        ('الظهر', prayer_dict.get('الظهر')),
+        ('العصر', prayer_dict.get('العصر')),
+        ('المغرب', prayer_dict.get('المغرب')),
+        ('العشاء', prayer_dict.get('العشاء'))
+    ]
+    current_time_str = current_time.strftime('%H:%M')
+    for name, time_str in prayers:
+        if time_str and time_str > current_time_str:
+            return name, time_str
+    # إذا لم يجد صلاة لاحقة، نأخذ الفجر لليوم التالي
+    return 'الفجر', prayer_dict.get('الفجر', '--:--')
+
+next_prayer_name, next_prayer_time = get_next_prayer(prayer_dict, now) if prayer_dict else ('الفجر', '--:--')
+
 prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 
 tawalee_list = get_tawalee_data()
@@ -315,7 +333,7 @@ html_code = f"""
             backdrop-filter: blur(5px);
             border-radius: 30px;
             border: 1px solid rgba(255,255,255,0.2);
-            padding: 10px 20px;
+            padding: 10px 12px;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }}
@@ -338,45 +356,60 @@ html_code = f"""
             display: inline-block;
         }}
 
-        /* حاوية البطاقات (شبكة مرنة) */
+        /* حاوية البطاقات الثلاث */
         .cards-grid {{
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: stretch;
             gap: 6px;
             width: 100%;
             margin-top: 5px;
         }}
 
         .date-card {{
-            flex: 1 1 140px;
-            min-width: 130px;
+            flex: 1.1;
+            min-width: 110px;
+            text-align: right;
         }}
-        .day-ar {{ font-size: 1.6rem; font-weight: 900; }}
-        .day-en {{ font-size: 1rem; opacity: 0.9; }}
-        .hijri-date {{ font-size: 1.2rem; font-weight: 700; margin-top: 5px; }}
-        .miladi-date {{ font-size: 1rem; opacity: 0.9; }}
+        .day-ar {{ font-size: 1.4rem; font-weight: 900; }}
+        .day-en {{ font-size: 0.9rem; opacity: 0.9; }}
+        .hijri-date {{ font-size: 1.1rem; font-weight: 700; margin-top: 5px; }}
+        .miladi-date {{ font-size: 0.9rem; opacity: 0.9; }}
 
-        .weather-card {{
-            flex: 1 1 180px;
-            min-width: 160px;
+        .prayer-card {{
+            flex: 1.2;
+            min-width: 120px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            justify-content: center;
+            align-items: center;
+        }}
+        .prayer-icon {{ font-size: 1.6rem; }}
+        .prayer-name {{ font-size: 1.2rem; font-weight: 700; margin: 4px 0; }}
+        .prayer-time {{ font-size: 1.4rem; font-weight: 900; }}
+
+        .weather-card {{
+            flex: 1.1;
+            min-width: 110px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }}
         .weather-row {{
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 5px;
+            padding: 0 2px;
         }}
         .weather-label {{
             opacity: 0.8;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }}
         .weather-value {{
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }}
 
         /* بطاقات الطواليع والمدينة */
@@ -441,9 +474,12 @@ html_code = f"""
             .main-container {{ padding: 18vh 10px 0 10px; }}
             .time-display {{ font-size: 2.2rem; }}
             .ampm-display {{ font-size: 1.8rem; }}
-            .cards-grid {{ gap: 5px; }}
-            .date-card, .weather-card {{ min-width: 120px; }}
-            .day-ar {{ font-size: 1.4rem; }}
+            .cards-grid {{ gap: 4px; }}
+            .date-card, .weather-card {{ min-width: 100px; }}
+            .day-ar {{ font-size: 1.2rem; }}
+            .prayer-name {{ font-size: 1rem; }}
+            .prayer-time {{ font-size: 1.2rem; }}
+            .weather-value {{ font-size: 1rem; }}
             .tawalee-item {{ min-width: 70px; padding: 5px 6px; }}
             .city-card {{ min-width: 80px; }}
         }}
@@ -465,8 +501,9 @@ html_code = f"""
             <span id="live-ampm" class="ampm-display"></span>
         </div>
 
-        <!-- شبكة البطاقات: التاريخ والطقس -->
+        <!-- صف البطاقات الثلاث: اليوم، الصلاة، الطقس -->
         <div class="cards-grid">
+            <!-- بطاقة اليوم (يمين) -->
             <div class="card date-card">
                 <div class="day-ar">{day_ar}</div>
                 <div class="day-en">{day_en}</div>
@@ -474,6 +511,14 @@ html_code = f"""
                 <div class="miladi-date">{mil_str}</div>
             </div>
 
+            <!-- بطاقة الصلاة القادمة (وسط) -->
+            <div class="card prayer-card">
+                <div class="prayer-icon">🕌</div>
+                <div class="prayer-name">{next_prayer_name}</div>
+                <div class="prayer-time">{next_prayer_time}</div>
+            </div>
+
+            <!-- بطاقة الطقس (يسار) -->
             <div class="card weather-card">
                 <div class="weather-row">
                     <span class="weather-label">🌡️ الحرارة</span>
