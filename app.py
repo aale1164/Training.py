@@ -196,10 +196,9 @@ html_code = f"""
             height: 100%;
             z-index: -1;
             overflow: hidden;
-            /* إزالة الخلفية السوداء، ستظهر الصورة فقط */
         }}
 
-        /* صورة الخلفية الجديدة بشفافية 50% */
+        /* صورة الخلفية مع إضاءة 75% */
         .bg-image {{
             position: absolute;
             top: 0;
@@ -210,7 +209,7 @@ html_code = f"""
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            opacity: 0.5;
+            opacity: 0.75;
             z-index: -2;
         }}
 
@@ -275,7 +274,7 @@ html_code = f"""
         .ampm-display {{
             font-size: clamp(2.8rem, 12vw, 5rem);
             margin-right: 8px;
-            color: #FFD966;
+            color: white;
             font-weight: 700;
         }}
 
@@ -353,11 +352,8 @@ html_code = f"""
 </head>
 <body>
     <div class="background-container">
-        <!-- صورة الخلفية بشفافية 50% -->
         <div class="bg-image"></div>
-        <!-- الفيديو بشفافية 50% -->
         {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else ''}
-        <!-- غطاء العلامة المائية -->
         <div id="watermark-cover"></div>
     </div>
 
