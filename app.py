@@ -189,7 +189,7 @@ html_code = f"""
 
         #bgVideo {{
             position: absolute;
-            top: 42%;               /* رفع الفيديو قليلاً للأعلى ليتوسط بين Sunday و Temp */
+            top: 56%;               /* تم ضبطها لتظهر تحت عبارة "63 days left for Summer" */
             left: 50%;
             width: 135px;
             height: 240px;
@@ -201,7 +201,7 @@ html_code = f"""
 
         .bg-image {{
             position: absolute;
-            top: 42%;
+            top: 56%;
             left: 50%;
             width: 135px;
             height: 240px;
