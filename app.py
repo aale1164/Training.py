@@ -17,6 +17,7 @@ except ImportError:
 
 sa_tz = pytz.timezone('Asia/Riyadh')
 
+# --- دوال جلب البيانات (مع تخزين مؤقت) ---
 @st.cache_data(ttl=600)
 def fetch_weather_cached(lat, lon):
     try:
@@ -86,6 +87,18 @@ def get_tawalee_data():
     results.sort(key=lambda x: x['days'])
     return results[:3]
 
+@st.cache_data(ttl=86400)  # تخزين اسم المدينة لمدة يوم
+def get_city_name_cached(lat, lon):
+    try:
+        url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&accept-language=ar"
+        headers = {'User-Agent': 'FlatEarthClockApp/1.0'}
+        response = requests.get(url, headers=headers, timeout=5).json()
+        address = response.get('address', {})
+        city = address.get('city') or address.get('town') or address.get('village') or address.get('state')
+        return city if city else "موقع غير معروف"
+    except:
+        return "تعذر تحديد الموقع"
+
 @st.cache_data
 def get_video_base64(video_path):
     try:
@@ -104,6 +117,7 @@ def get_image_base64(image_path):
     except:
         return None
 
+# --- إدارة حالة الموقع الجغرافي ---
 if 'lat' not in st.session_state:
     st.session_state.lat, st.session_state.lon = 26.32, 43.97
     st.session_state.location_checked = False
@@ -155,6 +169,7 @@ if not st.session_state.location_checked and GEO_LIB_AVAILABLE:
 if not st.session_state.location_checked:
     st.session_state.location_checked = True
 
+# --- البيانات الأساسية ---
 now = datetime.now(sa_tz)
 today = now.date()
 
@@ -192,6 +207,8 @@ prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 
 tawalee_list = get_tawalee_data()
 tawalee_json = json.dumps(tawalee_list, ensure_ascii=False)
+
+city_name = get_city_name_cached(st.session_state.lat, st.session_state.lon)
 
 video_path = "ARRR1.mp4"
 video_base64 = get_video_base64(video_path)
@@ -239,16 +256,28 @@ html_code = f"""
             z-index: -2;
         }}
 
-        #bgVideo {{
+        .video-card {{
             position: absolute;
-            top: 0;
+            top: 5%;
             left: 50%;
-            width: 100vw;
-            height: 100vh;
-            object-fit: contain;
             transform: translateX(-50%);
+            width: 90%;
+            max-width: 500px;
+            height: auto;
+            z-index: 1;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }}
+
+        #bgVideo {{
+            width: 100%;
+            height: auto;
+            display: block;
             mix-blend-mode: screen;
-            z-index: -1;
         }}
 
         #watermark-cover {{
@@ -258,13 +287,13 @@ html_code = f"""
             width: 120px;
             height: 40px;
             background-color: black;
-            z-index: 0;
+            z-index: 2;
             opacity: 1;
         }}
 
         .main-container {{
             position: relative;
-            z-index: 1;
+            z-index: 10;
             width: 100%;
             max-width: 600px;
             height: 100%;
@@ -275,6 +304,10 @@ html_code = f"""
             padding: 4vh 16px 0 16px;
             margin: 0 auto;
             color: white;
+            pointer-events: none;
+        }}
+        .main-container * {{
+            pointer-events: auto;
         }}
 
         /* نمط البطاقة الموحد */
@@ -290,6 +323,7 @@ html_code = f"""
 
         .time-card {{
             margin-bottom: 15px;
+            margin-top: 20px;
         }}
         .time-display {{
             font-size: clamp(2.5rem, 12vw, 4.5rem);
@@ -305,14 +339,18 @@ html_code = f"""
             display: inline-block;
         }}
 
-        .season-main {{
+        /* بطاقة الفصل */
+        .season-card {{
+            margin: 10px 0;
+            padding: 8px 25px;
+            background: rgba(0,40,20,0.4);
+        }}
+        .season-text {{
             font-size: clamp(1.2rem, 5vw, 1.8rem);
             font-weight: 700;
-            margin: 15px 0 10px;
             color: #B5FFB5;
-            text-shadow: 2px 2px 8px black;
         }}
-        .season-main-sub {{
+        .season-sub {{
             font-size: clamp(0.9rem, 3.5vw, 1.2rem);
             opacity: 0.9;
             font-weight: 400;
@@ -329,7 +367,6 @@ html_code = f"""
             margin-top: 5px;
         }}
 
-        /* بطاقة التاريخ */
         .date-card {{
             flex: 1 1 140px;
             min-width: 130px;
@@ -339,7 +376,6 @@ html_code = f"""
         .hijri-date {{ font-size: 1.2rem; font-weight: 700; margin-top: 5px; }}
         .miladi-date {{ font-size: 1rem; opacity: 0.9; }}
 
-        /* بطاقة الطقس */
         .weather-card {{
             flex: 1 1 180px;
             min-width: 160px;
@@ -362,10 +398,11 @@ html_code = f"""
             font-size: 1.2rem;
         }}
 
-        /* بطاقات الطواليع */
+        /* بطاقات الطواليع والمدينة */
         .tawalee-container {{
             display: flex;
             justify-content: center;
+            align-items: stretch;
             gap: 10px;
             margin-top: 15px;
             flex-wrap: wrap;
@@ -383,7 +420,22 @@ html_code = f"""
         .tawalee-name {{ font-weight: bold; font-size: 1rem; }}
         .tawalee-days {{ font-size: 0.9rem; opacity: 0.9; }}
 
-        /* روابط التواصل */
+        /* بطاقة المدينة (أصغر قليلاً) */
+        .city-card {{
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+            padding: 8px 12px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            min-width: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }}
+        .city-icon {{ font-size: 1.4rem; }}
+        .city-name {{ font-weight: bold; font-size: 0.9rem; }}
+
         .social-footer {{
             margin-top: auto;
             padding-bottom: 20px;
@@ -414,14 +466,18 @@ html_code = f"""
             .cards-grid {{ gap: 8px; }}
             .date-card, .weather-card {{ min-width: 120px; }}
             .day-ar {{ font-size: 1.4rem; }}
+            .tawalee-item {{ min-width: 75px; padding: 6px 8px; }}
+            .city-card {{ min-width: 70px; }}
         }}
     </style>
 </head>
 <body>
     <div class="background-container">
         <div class="bg-image"></div>
-        {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else ''}
-        <div id="watermark-cover"></div>
+        <div class="video-card">
+            {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else ''}
+            <div id="watermark-cover"></div>
+        </div>
     </div>
 
     <div class="main-container">
@@ -431,15 +487,16 @@ html_code = f"""
             <span id="live-ampm" class="ampm-display"></span>
         </div>
 
-        <!-- متبقي على الفصل -->
-        <div class="season-main">
-            {season_icon} متبقي على {season_ar}: {days_left} يوم
-            <span class="season-main-sub">{days_left} days left for {season_en}</span>
+        <!-- بطاقة متبقي على الفصل -->
+        <div class="card season-card">
+            <div class="season-text">
+                {season_icon} متبقي على {season_ar}: {days_left} يوم
+            </div>
+            <span class="season-sub">{days_left} days left for {season_en}</span>
         </div>
 
         <!-- شبكة البطاقات: التاريخ والطقس -->
         <div class="cards-grid">
-            <!-- بطاقة اليوم والتاريخ -->
             <div class="card date-card">
                 <div class="day-ar">{day_ar}</div>
                 <div class="day-en">{day_en}</div>
@@ -447,7 +504,6 @@ html_code = f"""
                 <div class="miladi-date">{mil_str}</div>
             </div>
 
-            <!-- بطاقة الطقس والشروق والغروب -->
             <div class="card weather-card">
                 <div class="weather-row">
                     <span class="weather-label">🌡️ الحرارة</span>
@@ -464,8 +520,17 @@ html_code = f"""
             </div>
         </div>
 
-        <!-- بطاقات الطواليع -->
-        <div id="tawalee-container" class="tawalee-container"></div>
+        <!-- بطاقات الطواليع + المدينة -->
+        <div id="tawalee-container" class="tawalee-container">
+            <!-- الطواليع ستضاف هنا بواسطة JS -->
+        </div>
+        <!-- إضافة بطاقة المدينة يدوياً -->
+        <div class="tawalee-container" style="margin-top: 5px;">
+            <div class="city-card">
+                <span class="city-icon">📍</span>
+                <span class="city-name">{city_name}</span>
+            </div>
+        </div>
 
         <!-- روابط التواصل -->
         <div class="social-footer">
@@ -537,4 +602,4 @@ html_code = f"""
 </html>
 """
 
-components.html(html_code, height=950, scrolling=False)
+components.html(html_code, height=1000, scrolling=False)
