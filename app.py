@@ -10,27 +10,28 @@ st.set_page_config(
     layout="wide"
 )
 
-# ========== دالة توليد HTML مع Base64 ==========
+# ========== دالة إنشاء HTML مع Base64 ==========
 def get_video_html(file_path):
-    """تقرأ الفيديو وتحوله إلى HTML مع Base64 لعرضه كخلفية كاملة"""
+    """تقرأ الفيديو من static وتحوله إلى HTML مع Base64 ليعمل كخلفية كاملة"""
+    # التحقق من وجود الملف
     if not os.path.exists(file_path):
         return f"""
-        <div style="color:red; text-align:center; padding:50px;">
-            <h1>⚠️ خطأ: لم يتم العثور على ملف الفيديو</h1>
+        <div style="color:red; text-align:center; padding:50px; font-family:sans-serif;">
+            <h1>⚠️ خطأ: ملف الفيديو غير موجود</h1>
             <p>المسار المطلوب: {file_path}</p>
+            <p>تأكد من وجود مجلد <code>static</code> بداخله الفيديو بالاسم الصحيح.</p>
         </div>
         """
+
+    # قراءة الملف وتحويله إلى Base64
     try:
         with open(file_path, "rb") as f:
-            video_data = f.read()
-        # فحص الحجم لتجنب بطء التحميل
-        size_mb = len(video_data) / (1024 * 1024)
-        if size_mb > 10:
-            st.warning(f"⚠️ حجم الفيديو كبير ({size_mb:.1f} MB). يفضل ضغطه لأقل من 5 MB لتحميل أسرع.")
-        b64 = base64.b64encode(video_data).decode()
+            video_bytes = f.read()
+        b64 = base64.b64encode(video_bytes).decode()
     except Exception as e:
-        return f"<h1 style='color:red;'>خطأ في قراءة الفيديو: {e}</h1>"
+        return f"<h1 style='color:red; text-align:center;'>❌ خطأ في قراءة الفيديو: {e}</h1>"
 
+    # قالب HTML مع CSS محسّن
     return f"""
     <!DOCTYPE html>
     <html>
@@ -56,7 +57,7 @@ def get_video_html(file_path):
                 width: auto;
                 height: auto;
                 z-index: -1;
-                filter: brightness(0.4);
+                filter: brightness(0.55);  /* زيادة السطوع قليلاً لجعل التفاصيل أوضح */
                 object-fit: cover;
             }}
             .content {{
@@ -77,7 +78,7 @@ def get_video_html(file_path):
                 font-size: clamp(3rem, 15vw, 7rem);
                 font-weight: bold;
                 letter-spacing: 5px;
-                background: rgba(0,0,0,0.3);
+                background: rgba(0, 0, 0, 0.3);
                 padding: 0.2em 0.8em;
                 border-radius: 20px;
                 backdrop-filter: blur(5px);
@@ -95,23 +96,30 @@ def get_video_html(file_path):
                 position: absolute;
                 bottom: 20px;
                 right: 20px;
-                color: rgba(255,255,255,0.6);
+                color: rgba(255, 255, 255, 0.6);
                 font-size: 0.8rem;
                 z-index: 2;
             }}
         </style>
     </head>
     <body>
+        <!-- فيديو الخلفية Base64 -->
         <video autoplay loop muted playsinline id="bgVideo">
             <source src="data:video/mp4;base64,{b64}" type="video/mp4">
             متصفحك لا يدعم تشغيل الفيديو.
         </video>
+
+        <!-- المحتوى النصي فوق الفيديو -->
         <div class="content">
             <div class="time" id="clock">--:--:--</div>
             <h2>🧭 ساعة الأرض - نسخة التدريب</h2>
-            <p>تم سحب الفيديو من ملفات السيرفر بنجاح</p>
+            <p>✅ تم سحب الفيديو من ملفات السيرفر بنجاح</p>
         </div>
-        <div class="note">🎥 فيديو خلفي | مختبر التدريب</div>
+
+        <!-- تذييل صغير -->
+        <div class="note">🎥 خلفية متحركة | مختبر التدريب</div>
+
+        <!-- ساعة رقمية تتحدث تلقائياً -->
         <script>
             (function() {{
                 function updateClock() {{
@@ -128,25 +136,19 @@ def get_video_html(file_path):
     </html>
     """
 
-# ========== البرنامج الرئيسي ==========
+# ========== تشغيل التطبيق ==========
 def main():
-    # المسار الصحيح للفيديو داخل مجلد static
+    # المسار القياسي: مجلد static بجانب app.py
     VIDEO_FILE = os.path.join("static", "tYdjwgYk-Wu19ONR.mp4")
 
-    st.title("🌍 مختبر التدريب - خلفية فيديو متحركة")
-    st.markdown("---")
-
-    # إنشاء HTML وعرضه
+    # عرض HTML داخل Streamlit
     html_content = get_video_html(VIDEO_FILE)
-
-    # استخدام components.html مع ارتفاع مناسب
-    # ارتفاع 850 يضمن ظهور المحتوى بالكامل دون أشرطة تمرير مزعجة
     components.html(html_content, height=850, scrolling=False)
 
-    # رسالة صغيرة تحت المكون (تظهر فقط إذا كان هناك مشكلة)
+    # رسالة إضافية في واجهة Streamlit في حالة عدم وجود الملف
     if not os.path.exists(VIDEO_FILE):
-        st.error(f"الملف غير موجود: {VIDEO_FILE}")
-        st.info("تأكد من وجود مجلد `static` بداخله الفيديو بالاسم الصحيح.")
+        st.error(f"🔴 الملف غير موجود: {VIDEO_FILE}")
+        st.info("📁 تأكد من وجود مجلد `static` في نفس مسار التطبيق، وأن الفيديو بداخله بالاسم الصحيح.")
 
 if __name__ == "__main__":
     main()
