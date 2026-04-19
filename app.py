@@ -7,7 +7,7 @@ from hijri_converter import Gregorian
 import json
 import base64
 
-st.set_page_config(page_title="ساعة الأرض - aale1164", layout="wide")
+st.set_page_config(page_title="ط³ط§ط¹ط© ط§ظ„ط£ط±ط¶ - aale1164", layout="wide")
 
 try:
     from streamlit_js_eval import get_geolocation
@@ -17,7 +17,7 @@ except ImportError:
 
 sa_tz = pytz.timezone('Asia/Riyadh')
 
-# --- دوال جلب البيانات (مع تخزين مؤقت) ---
+# --- ط¯ظˆط§ظ„ ط¬ظ„ط¨ ط§ظ„ط¨ظٹط§ظ†ط§طھ (ظ…ط¹ طھط®ط²ظٹظ† ظ…ط¤ظ‚طھ) ---
 @st.cache_data(ttl=600)
 def fetch_weather_cached(lat, lon):
     try:
@@ -52,15 +52,15 @@ def get_tawalee_data():
     today = date.today()
     y = today.year
     tawalee = [
-        ("المربعانية", date(y, 12, 7), "❄️"),
-        ("الشبط", date(y + (1 if today > date(y, 1, 15) else 0), 1, 15), "🌬️"),
-        ("العقارب", date(y + (1 if today > date(y, 2, 10) else 0), 2, 10), "🦂"),
-        ("الحميمين", date(y + (1 if today > date(y, 3, 21) else 0), 3, 21), "⛈️"),
-        ("الذرعان", date(y + (1 if today > date(y, 4, 16) else 0), 4, 16), "🌡️"),
-        ("الكنة", date(y + (1 if today > date(y, 4, 29) else 0), 4, 29), "🔥"),
-        ("الثريا", date(y + (1 if today > date(y, 6, 7) else 0), 6, 7), "✨"),
-        ("سهيل", date(y + (1 if today > date(y, 8, 24) else 0), 8, 24), "🌟"),
-        ("الوسم", date(y + (1 if today > date(y, 10, 16) else 0), 10, 16), "🌧️")
+        ("ط§ظ„ظ…ط±ط¨ط¹ط§ظ†ظٹط©", date(y, 12, 7), "â‌„ï¸ڈ"),
+        ("ط§ظ„ط´ط¨ط·", date(y + (1 if today > date(y, 1, 15) else 0), 1, 15), "ًںŒ¬ï¸ڈ"),
+        ("ط§ظ„ط¹ظ‚ط§ط±ط¨", date(y + (1 if today > date(y, 2, 10) else 0), 2, 10), "ًں¦‚"),
+        ("ط§ظ„ط­ظ…ظٹظ…ظٹظ†", date(y + (1 if today > date(y, 3, 21) else 0), 3, 21), "â›ˆï¸ڈ"),
+        ("ط§ظ„ط°ط±ط¹ط§ظ†", date(y + (1 if today > date(y, 4, 16) else 0), 4, 16), "ًںŒ،ï¸ڈ"),
+        ("ط§ظ„ظƒظ†ط©", date(y + (1 if today > date(y, 4, 29) else 0), 4, 29), "ًں”¥"),
+        ("ط§ظ„ط«ط±ظٹط§", date(y + (1 if today > date(y, 6, 7) else 0), 6, 7), "âœ¨"),
+        ("ط³ظ‡ظٹظ„", date(y + (1 if today > date(y, 8, 24) else 0), 8, 24), "ًںŒں"),
+        ("ط§ظ„ظˆط³ظ…", date(y + (1 if today > date(y, 10, 16) else 0), 10, 16), "ًںŒ§ï¸ڈ")
     ]
     results = []
     for name, start_date, icon in tawalee:
@@ -75,18 +75,18 @@ def get_tawalee_data():
 def get_zodiac_data():
     today = date.today()
     zodiacs = [
-        ("♈ الحمل", (3, 21), (4, 19)),
-        ("♉ الثور", (4, 20), (5, 20)),
-        ("♊ الجوزاء", (5, 21), (6, 20)),
-        ("♋ السرطان", (6, 21), (7, 22)),
-        ("♌ الأسد", (7, 23), (8, 22)),
-        ("♍ العذراء", (8, 23), (9, 22)),
-        ("♎ الميزان", (9, 23), (10, 22)),
-        ("♏ العقرب", (10, 23), (11, 21)),
-        ("♐ القوس", (11, 22), (12, 21)),
-        ("♑ الجدي", (12, 22), (1, 19)),
-        ("♒ الدلو", (1, 20), (2, 18)),
-        ("♓ الحوت", (2, 19), (3, 20))
+        ("â™ˆ ط§ظ„ط­ظ…ظ„", (3, 21), (4, 19)),
+        ("â™‰ ط§ظ„ط«ظˆط±", (4, 20), (5, 20)),
+        ("â™ٹ ط§ظ„ط¬ظˆط²ط§ط،", (5, 21), (6, 20)),
+        ("â™‹ ط§ظ„ط³ط±ط·ط§ظ†", (6, 21), (7, 22)),
+        ("â™Œ ط§ظ„ط£ط³ط¯", (7, 23), (8, 22)),
+        ("â™چ ط§ظ„ط¹ط°ط±ط§ط،", (8, 23), (9, 22)),
+        ("â™ژ ط§ظ„ظ…ظٹط²ط§ظ†", (9, 23), (10, 22)),
+        ("â™ڈ ط§ظ„ط¹ظ‚ط±ط¨", (10, 23), (11, 21)),
+        ("â™گ ط§ظ„ظ‚ظˆط³", (11, 22), (12, 21)),
+        ("â™‘ ط§ظ„ط¬ط¯ظٹ", (12, 22), (1, 19)),
+        ("â™’ ط§ظ„ط¯ظ„ظˆ", (1, 20), (2, 18)),
+        ("â™“ ط§ظ„ط­ظˆطھ", (2, 19), (3, 20))
     ]
     y = today.year
     for name, start, end in zodiacs:
@@ -94,9 +94,9 @@ def get_zodiac_data():
         end_date = date(y, end[0], end[1])
         if start_date <= today <= end_date:
             return name
-        if name == "♑ الجدي" and (today >= date(y, 12, 22) or today <= date(y, 1, 19)):
+        if name == "â™‘ ط§ظ„ط¬ط¯ظٹ" and (today >= date(y, 12, 22) or today <= date(y, 1, 19)):
             return name
-    return "♈ الحمل"
+    return "â™ˆ ط§ظ„ط­ظ…ظ„"
 
 @st.cache_data(ttl=86400)
 def get_city_name_cached(lat, lon):
@@ -122,7 +122,7 @@ def get_city_name_cached(lat, lon):
                 return city
     except:
         pass
-    return "جاري تحديد الموقع..."
+    return "ط¬ط§ط±ظٹ طھط­ط¯ظٹط¯ ط§ظ„ظ…ظˆظ‚ط¹..."
 
 @st.cache_data
 def get_video_base64(video_path):
@@ -142,7 +142,7 @@ def get_image_base64(image_path):
     except:
         return None
 
-# --- إدارة حالة الموقع الجغرافي ---
+# --- ط¥ط¯ط§ط±ط© ط­ط§ظ„ط© ط§ظ„ظ…ظˆظ‚ط¹ ط§ظ„ط¬ط؛ط±ط§ظپظٹ ---
 if 'lat' not in st.session_state:
     st.session_state.lat, st.session_state.lon = 26.32, 43.97
     st.session_state.location_checked = False
@@ -164,29 +164,29 @@ if not st.session_state.location_checked and GEO_LIB_AVAILABLE:
         .permission-box button:hover { background: #FFD700; transform: scale(1.05); }
     </style>
     <div class="permission-box">
-        <h1>🌍 أهلاً بك</h1>
-        <p style="font-size: 18px;">هذا التطبيق نسخة تجريبية، شاركونا آرائكم واقتراحاتكم</p>
-        <p style="font-size: 18px;">لكي نجعله يتناسب مع احتياجاتكم</p>
-        <p style="font-size: 16px; margin-top: 15px;">من خلال الضغط على وسائل التواصل في الصفحة التالية في جهة اليمين</p>
-        <p style="font-size: 18px; margin-top: 25px;">دمتم بخير، أخوكم / عدناني</p>
-        <p style="font-size: 16px; margin-top: 30px;">للحصول على مواقيت الصلاة والطقس بدقة، نرجو الموافقة على مشاركة موقعك.</p>
+        <h1>ًںŒچ ط£ظ‡ظ„ط§ظ‹ ط¨ظƒ</h1>
+        <p style="font-size: 18px;">ظ‡ط°ط§ ط§ظ„طھط·ط¨ظٹظ‚ ظ†ط³ط®ط© طھط¬ط±ظٹط¨ظٹط©طŒ ط´ط§ط±ظƒظˆظ†ط§ ط¢ط±ط§ط¦ظƒظ… ظˆط§ظ‚طھط±ط§ط­ط§طھظƒظ…</p>
+        <p style="font-size: 18px;">ظ„ظƒظٹ ظ†ط¬ط¹ظ„ظ‡ ظٹطھظ†ط§ط³ط¨ ظ…ط¹ ط§ط­طھظٹط§ط¬ط§طھظƒظ…</p>
+        <p style="font-size: 16px; margin-top: 15px;">ظ…ظ† ط®ظ„ط§ظ„ ط§ظ„ط¶ط؛ط· ط¹ظ„ظ‰ ظˆط³ط§ط¦ظ„ ط§ظ„طھظˆط§طµظ„ ظپظٹ ط§ظ„طµظپط­ط© ط§ظ„طھط§ظ„ظٹط© ظپظٹ ط¬ظ‡ط© ط§ظ„ظٹظ…ظٹظ†</p>
+        <p style="font-size: 18px; margin-top: 25px;">ط¯ظ…طھظ… ط¨ط®ظٹط±طŒ ط£ط®ظˆظƒظ… / ط¹ط¯ظ†ط§ظ†ظٹ</p>
+        <p style="font-size: 16px; margin-top: 30px;">ظ„ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ظ…ظˆط§ظ‚ظٹطھ ط§ظ„طµظ„ط§ط© ظˆط§ظ„ط·ظ‚ط³ ط¨ط¯ظ‚ط©طŒ ظ†ط±ط¬ظˆ ط§ظ„ظ…ظˆط§ظپظ‚ط© ط¹ظ„ظ‰ ظ…ط´ط§ط±ظƒط© ظ…ظˆظ‚ط¹ظƒ.</p>
     </div>
     """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
-        if st.button("📍 مشاركة الموقع", type="primary", use_container_width=True):
+        if st.button("ًں“چ ظ…ط´ط§ط±ظƒط© ط§ظ„ظ…ظˆظ‚ط¹", type="primary", use_container_width=True):
             try:
                 loc = get_geolocation()
                 if loc and 'coords' in loc:
                     st.session_state.lat = loc['coords']['latitude']
                     st.session_state.lon = loc['coords']['longitude']
                 else:
-                    st.warning("تعذر الحصول على الموقع. سيتم استخدام الموقع الافتراضي.")
+                    st.warning("طھط¹ط°ط± ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„ظ…ظˆظ‚ط¹. ط³ظٹطھظ… ط§ط³طھط®ط¯ط§ظ… ط§ظ„ظ…ظˆظ‚ط¹ ط§ظ„ط§ظپطھط±ط§ط¶ظٹ.")
                 st.session_state.location_checked = True
                 st.rerun()
             except Exception as e:
-                st.error(f"حدث خطأ: {e}")
+                st.error(f"ط­ط¯ط« ط®ط·ط£: {e}")
                 st.session_state.location_checked = True
                 st.rerun()
     st.stop()
@@ -194,24 +194,24 @@ if not st.session_state.location_checked and GEO_LIB_AVAILABLE:
 if not st.session_state.location_checked:
     st.session_state.location_checked = True
 
-# --- البيانات الأساسية ---
+# --- ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ط£ط³ط§ط³ظٹط© ---
 now = datetime.now(sa_tz)
 today = now.date()
 
-weekdays_ar = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
+weekdays_ar = ["ط§ظ„ط§ط«ظ†ظٹظ†", "ط§ظ„ط«ظ„ط§ط«ط§ط،", "ط§ظ„ط£ط±ط¨ط¹ط§ط،", "ط§ظ„ط®ظ…ظٹط³", "ط§ظ„ط¬ظ…ط¹ط©", "ط§ظ„ط³ط¨طھ", "ط§ظ„ط£ط­ط¯"]
 weekdays_en = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 day_ar = weekdays_ar[today.weekday()]
 day_en = weekdays_en[today.weekday()]
 
 try:
     h = Gregorian.fromdate(today).to_hijri()
-    hij_str = f"{h.day}/{h.month}/{h.year} هـ"
+    hij_str = f"{h.day}/{h.month}/{h.year} ظ‡ظ€"
 except:
-    hij_str = "--/--/---- هـ"
-mil_str = f"{today.day}/{today.month}/{today.year} م"
+    hij_str = "--/--/---- ظ‡ظ€"
+mil_str = f"{today.day}/{today.month}/{today.year} ظ…"
 
 temp = fetch_weather_cached(st.session_state.lat, st.session_state.lon)
-weather_str = f"{temp}°C" if temp is not None else "--°C"
+weather_str = f"{temp}آ°C" if temp is not None else "--آ°C"
 
 prayer_times_data = fetch_prayer_times_cached(st.session_state.lat, st.session_state.lon, today.strftime("%d-%m-%Y"))
 sunrise = sunset = "--:--"
@@ -220,28 +220,28 @@ if prayer_times_data:
     sunrise = prayer_times_data.get('Sunrise', '--:--')
     sunset = prayer_times_data.get('Maghrib', '--:--')
     prayer_dict = {
-        'الفجر': prayer_times_data.get('Fajr', '--:--'),
-        'الظهر': prayer_times_data.get('Dhuhr', '--:--'),
-        'العصر': prayer_times_data.get('Asr', '--:--'),
-        'المغرب': prayer_times_data.get('Maghrib', '--:--'),
-        'العشاء': prayer_times_data.get('Isha', '--:--')
+        'ط§ظ„ظپط¬ط±': prayer_times_data.get('Fajr', '--:--'),
+        'ط§ظ„ط¸ظ‡ط±': prayer_times_data.get('Dhuhr', '--:--'),
+        'ط§ظ„ط¹طµط±': prayer_times_data.get('Asr', '--:--'),
+        'ط§ظ„ظ…ط؛ط±ط¨': prayer_times_data.get('Maghrib', '--:--'),
+        'ط§ظ„ط¹ط´ط§ط،': prayer_times_data.get('Isha', '--:--')
     }
 
 def get_next_prayer(prayer_dict, current_time):
     prayers = [
-        ('الفجر', prayer_dict.get('الفجر')),
-        ('الظهر', prayer_dict.get('الظهر')),
-        ('العصر', prayer_dict.get('العصر')),
-        ('المغرب', prayer_dict.get('المغرب')),
-        ('العشاء', prayer_dict.get('العشاء'))
+        ('ط§ظ„ظپط¬ط±', prayer_dict.get('ط§ظ„ظپط¬ط±')),
+        ('ط§ظ„ط¸ظ‡ط±', prayer_dict.get('ط§ظ„ط¸ظ‡ط±')),
+        ('ط§ظ„ط¹طµط±', prayer_dict.get('ط§ظ„ط¹طµط±')),
+        ('ط§ظ„ظ…ط؛ط±ط¨', prayer_dict.get('ط§ظ„ظ…ط؛ط±ط¨')),
+        ('ط§ظ„ط¹ط´ط§ط،', prayer_dict.get('ط§ظ„ط¹ط´ط§ط،'))
     ]
     current_time_str = current_time.strftime('%H:%M')
     for name, time_str in prayers:
         if time_str and time_str > current_time_str:
             return name, time_str
-    return 'الفجر', prayer_dict.get('الفجر', '--:--')
+    return 'ط§ظ„ظپط¬ط±', prayer_dict.get('ط§ظ„ظپط¬ط±', '--:--')
 
-next_prayer_name, next_prayer_time = get_next_prayer(prayer_dict, now) if prayer_dict else ('الفجر', '--:--')
+next_prayer_name, next_prayer_time = get_next_prayer(prayer_dict, now) if prayer_dict else ('ط§ظ„ظپط¬ط±', '--:--')
 
 prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 
@@ -272,7 +272,6 @@ html_code = f"""
             height: 100%;
             overflow: hidden;
             font-family: 'Tajawal', sans-serif;
-            background-color: black; /* خلفية سوداء افتراضية */
         }}
 
         .background-container {{
@@ -283,20 +282,18 @@ html_code = f"""
             height: 100%;
             z-index: -1;
             overflow: hidden;
-            background-color: black;
         }}
 
         .bg-image {{
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 50vw;
-            height: 50vh;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-image: url('data:image/jpeg;base64,{image_base64}');
-            background-size: contain;
+            background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            transform: translate(-50%, -50%);
             opacity: 0.75;
             z-index: -2;
         }}
@@ -524,37 +521,38 @@ html_code = f"""
             </div>
 
             <div class="card prayer-card">
-                <div class="prayer-icon">🕌</div>
+                <div class="prayer-icon">ًں•Œ</div>
                 <div class="prayer-name">{next_prayer_name}</div>
                 <div class="prayer-time">{next_prayer_time}</div>
             </div>
 
             <div class="card weather-card">
                 <div class="weather-row">
-                    <span class="weather-label">🌡️ الحرارة</span>
+                    <span class="weather-label">ًںŒ،ï¸ڈ ط§ظ„ط­ط±ط§ط±ط©</span>
                     <span class="weather-value">{weather_str}</span>
                 </div>
                 <div class="weather-row">
-                    <span class="weather-label">☀️ الشروق</span>
+                    <span class="weather-label">âک€ï¸ڈ ط§ظ„ط´ط±ظˆظ‚</span>
                     <span class="weather-value">{sunrise}</span>
                 </div>
                 <div class="weather-row">
-                    <span class="weather-label">🌅 الغروب</span>
+                    <span class="weather-label">ًںŒ… ط§ظ„ط؛ط±ظˆط¨</span>
                     <span class="weather-value">{sunset}</span>
                 </div>
             </div>
         </div>
 
+        <!-- طµظپ ظˆط§ط­ط¯ ظٹط¬ظ…ط¹ ط§ظ„ط·ظˆط§ظ„ظٹط¹ + ط§ظ„ط¨ط±ط¬ -->
         <div id="tawalee-container" class="tawalee-container"></div>
 
         <div class="city-card">
-            <span class="city-icon">📍</span>
+            <span class="city-icon">ًں“چ</span>
             <span class="city-name">{city_name}</span>
         </div>
 
         <div class="social-footer">
-            <a href="https://twitter.com/aale1164" target="_blank">𝕏 @aale1164</a>
-            <a href="https://www.snapchat.com/add/aale112" target="_blank">👻 aale112</a>
+            <a href="https://twitter.com/aale1164" target="_blank">ً‌•ڈ @aale1164</a>
+            <a href="https://www.snapchat.com/add/aale112" target="_blank">ًں‘» aale112</a>
         </div>
     </div>
 
@@ -568,17 +566,19 @@ html_code = f"""
             const container = document.getElementById('tawalee-container');
             container.innerHTML = '';
             
+            // ط¥ط¶ط§ظپط© ط¨ط·ط§ظ‚ط§طھ ط§ظ„ط·ظˆط§ظ„ظٹط¹ ط§ظ„ط«ظ„ط§ط«
             tawaleeData.forEach(item => {{
                 const div = document.createElement('div');
                 div.className = 'tawalee-item';
                 div.innerHTML = `
                     <span class="tawalee-icon">${{item.icon}}</span>
                     <div class="tawalee-name">${{item.name}}</div>
-                    <div class="tawalee-days">${{item.days}} يوم</div>
+                    <div class="tawalee-days">${{item.days}} ظٹظˆظ…</div>
                 `;
                 container.appendChild(div);
             }});
             
+            // ط¥ط¶ط§ظپط© ط¨ط·ط§ظ‚ط© ط§ظ„ط¨ط±ط¬ ظƒط§ظ„ط¨ط·ط§ظ‚ط© ط§ظ„ط±ط§ط¨ط¹ط©
             const zodiacDiv = document.createElement('div');
             zodiacDiv.className = 'zodiac-item';
             zodiacDiv.innerHTML = `
