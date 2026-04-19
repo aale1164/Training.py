@@ -187,13 +187,13 @@ html_code = f"""
             background-color: black;
         }}
 
-        /* الفيديو بحجم نصف الشاشة في الأعلى والمنتصف */
+        /* الفيديو أصبح بحجم الشاشة الكاملة (ضعف الحجم السابق) */
         #bgVideo {{
             position: absolute;
             top: 0;
             left: 50%;
-            width: 50vw;
-            height: 50vh;
+            width: 100vw;
+            height: 100vh;
             object-fit: contain;
             transform: translateX(-50%);
             filter: brightness(0.7);
@@ -204,8 +204,8 @@ html_code = f"""
             position: absolute;
             top: 0;
             left: 50%;
-            width: 50vw;
-            height: 50vh;
+            width: 100vw;
+            height: 100vh;
             background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
             background-size: contain;
             background-position: center;
