@@ -199,15 +199,14 @@ html_code = f"""
             background-color: black;
         }}
 
-        /* طبقة إخفاء العلامة المائية */
         #watermark-cover {{
             position: absolute;
-            bottom: 10px;       /* المسافة من الأسفل */
-            left: 10px;         /* المسافة من اليسار */
-            width: 120px;       /* عرض منطقة التغطية */
-            height: 40px;       /* ارتفاع منطقة التغطية */
+            bottom: 10px;
+            left: 10px;
+            width: 120px;
+            height: 40px;
             background-color: black;
-            z-index: 0;         /* فوق الفيديو لكن تحت المحتوى */
+            z-index: 0;
             opacity: 1;
         }}
 
@@ -256,12 +255,12 @@ html_code = f"""
             margin-bottom: 5px;
         }}
         .time-display {{
-            font-size: clamp(3.2rem, 14vw, 6rem);
+            font-size: clamp(2.8rem, 12vw, 5rem);
             font-weight: 900;
             line-height: 1;
         }}
         .ampm-display {{
-            font-size: clamp(2rem, 8vw, 4rem);
+            font-size: clamp(2.8rem, 12vw, 5rem);
             margin-right: 8px;
             color: #FFD966;
             font-weight: 700;
@@ -342,7 +341,6 @@ html_code = f"""
 <body>
     <div class="background-container">
         {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else '<div class="bg-image"></div>'}
-        <!-- غطاء لإخفاء العلامة المائية (عدل القيم حسب موقع POND5) -->
         <div id="watermark-cover"></div>
     </div>
 
