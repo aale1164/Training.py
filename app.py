@@ -62,6 +62,30 @@ def get_season_data():
     next_spring = date(y + 1, 3, 21)
     return 'الربيع', 'Spring', (next_spring - today).days, '🌸'
 
+def get_tawalee_data():
+    today = date.today()
+    y = today.year
+    tawalee = [
+        ("المربعانية", date(y, 12, 7), "❄️"),
+        ("الشبط", date(y + (1 if today > date(y, 1, 15) else 0), 1, 15), "🌬️"),
+        ("العقارب", date(y + (1 if today > date(y, 2, 10) else 0), 2, 10), "🦂"),
+        ("الحميمين", date(y + (1 if today > date(y, 3, 21) else 0), 3, 21), "⛈️"),
+        ("الذرعان", date(y + (1 if today > date(y, 4, 16) else 0), 4, 16), "🌡️"),
+        ("الكنة", date(y + (1 if today > date(y, 4, 29) else 0), 4, 29), "🔥"),
+        ("الثريا", date(y + (1 if today > date(y, 6, 7) else 0), 6, 7), "✨"),
+        ("سهيل", date(y + (1 if today > date(y, 8, 24) else 0), 8, 24), "🌟"),
+        ("الوسم", date(y + (1 if today > date(y, 10, 16) else 0), 10, 16), "🌧️")
+    ]
+    results = []
+    for name, start_date, icon in tawalee:
+        diff = (start_date - today).days
+        if diff < 0:
+            start_date = start_date.replace(year=start_date.year + 1)
+            diff = (start_date - today).days
+        results.append({"name": name, "days": diff, "icon": icon})
+    results.sort(key=lambda x: x['days'])
+    return results[:3]  # أول ثلاث طواليع قادمة
+
 @st.cache_data
 def get_video_base64(video_path):
     try:
@@ -166,6 +190,9 @@ if prayer_times_data:
 season_ar, season_en, days_left, season_icon = get_season_data()
 prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 
+tawalee_list = get_tawalee_data()
+tawalee_json = json.dumps(tawalee_list, ensure_ascii=False)
+
 video_path = "ARRR1.mp4"
 video_base64 = get_video_base64(video_path)
 
@@ -198,7 +225,6 @@ html_code = f"""
             overflow: hidden;
         }}
 
-        /* صورة الخلفية مع إضاءة 75% */
         .bg-image {{
             position: absolute;
             top: 0;
@@ -213,7 +239,6 @@ html_code = f"""
             z-index: -2;
         }}
 
-        /* الفيديو مع إخفاء الخلفية السوداء */
         #bgVideo {{
             position: absolute;
             top: 0;
@@ -222,7 +247,7 @@ html_code = f"""
             height: 100vh;
             object-fit: contain;
             transform: translateX(-50%);
-            mix-blend-mode: screen;  /* يجعل اللون الأسود شفافًا */
+            mix-blend-mode: screen;
             z-index: -1;
         }}
 
@@ -292,6 +317,35 @@ html_code = f"""
             margin-top: 2px;
         }}
 
+        .tawalee-container {{
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }}
+        .tawalee-item {{
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            min-width: 100px;
+        }}
+        .tawalee-icon {{
+            font-size: 1.8rem;
+            display: block;
+        }}
+        .tawalee-name {{
+            font-weight: bold;
+            font-size: 1rem;
+        }}
+        .tawalee-days {{
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }}
+
         .info-row {{
             display: flex;
             flex-direction: row;
@@ -347,6 +401,7 @@ html_code = f"""
             .info-row {{ gap: 8px; }}
             .right-col {{ padding-left: 5%; }}
             .left-col {{ padding-right: 5%; }}
+            .tawalee-item {{ min-width: 80px; padding: 6px 10px; }}
         }}
     </style>
 </head>
@@ -366,6 +421,10 @@ html_code = f"""
         <div class="text-shadow season-main">
             {season_icon} متبقي على {season_ar}: {days_left} يوم
             <span class="season-main-sub">{days_left} days left for {season_en}</span>
+        </div>
+
+        <div id="tawalee-container" class="tawalee-container">
+            <!-- سيتم ملؤها بواسطة JavaScript -->
         </div>
 
         <div class="info-row">
@@ -402,6 +461,22 @@ html_code = f"""
     <script>
         const prayerTimes = {prayer_json};
         const TIMEZONE = 'Asia/Riyadh';
+        const tawaleeData = {tawalee_json};
+
+        function renderTawalee() {{
+            const container = document.getElementById('tawalee-container');
+            container.innerHTML = '';
+            tawaleeData.forEach(item => {{
+                const div = document.createElement('div');
+                div.className = 'tawalee-item';
+                div.innerHTML = `
+                    <span class="tawalee-icon">${{item.icon}}</span>
+                    <div class="tawalee-name">${{item.name}}</div>
+                    <div class="tawalee-days">${{item.days}} يوم</div>
+                `;
+                container.appendChild(div);
+            }});
+        }}
 
         function updateClock() {{
             const now = new Date();
@@ -428,6 +503,7 @@ html_code = f"""
             document.getElementById('live-ampm').textContent = ampmEn;
         }}
 
+        renderTawalee();
         updateClock();
         setInterval(updateClock, 1000);
     </script>
