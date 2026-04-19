@@ -187,7 +187,6 @@ html_code = f"""
             background-color: black;
         }}
 
-        /* الفيديو أصبح بحجم الشاشة الكاملة (ضعف الحجم السابق) */
         #bgVideo {{
             position: absolute;
             top: 0;
@@ -198,6 +197,18 @@ html_code = f"""
             transform: translateX(-50%);
             filter: brightness(0.7);
             background-color: black;
+        }}
+
+        /* طبقة إخفاء العلامة المائية */
+        #watermark-cover {{
+            position: absolute;
+            bottom: 10px;       /* المسافة من الأسفل */
+            left: 10px;         /* المسافة من اليسار */
+            width: 120px;       /* عرض منطقة التغطية */
+            height: 40px;       /* ارتفاع منطقة التغطية */
+            background-color: black;
+            z-index: 0;         /* فوق الفيديو لكن تحت المحتوى */
+            opacity: 1;
         }}
 
         .bg-image {{
@@ -331,6 +342,8 @@ html_code = f"""
 <body>
     <div class="background-container">
         {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else '<div class="bg-image"></div>'}
+        <!-- غطاء لإخفاء العلامة المائية (عدل القيم حسب موقع POND5) -->
+        <div id="watermark-cover"></div>
     </div>
 
     <div class="main-container">
