@@ -72,34 +72,33 @@ def get_tawalee_data():
     results.sort(key=lambda x: x['days'])
     return results[:3]
 
-def get_current_zodiac():
+def get_zodiac_data():
     today = date.today()
-    # تعريف الأبراج بتواريخها (يوم/شهر) وأيقونات
+    # تعريف الأبراج مع تواريخها التقريبية وأيقوناتها
     zodiacs = [
-        ("الجدي", (1, 1), (1, 19), "♑️"),
-        ("الدلو", (1, 20), (2, 18), "♒️"),
-        ("الحوت", (2, 19), (3, 20), "♓️"),
-        ("الحمل", (3, 21), (4, 19), "♈️"),
-        ("الثور", (4, 20), (5, 20), "♉️"),
-        ("الجوزاء", (5, 21), (6, 20), "♊️"),
-        ("السرطان", (6, 21), (7, 22), "♋️"),
-        ("الأسد", (7, 23), (8, 22), "♌️"),
-        ("العذراء", (8, 23), (9, 22), "♍️"),
-        ("الميزان", (9, 23), (10, 22), "♎️"),
-        ("العقرب", (10, 23), (11, 21), "♏️"),
-        ("القوس", (11, 22), (12, 21), "♐️"),
-        ("الجدي", (12, 22), (12, 31), "♑️")  # الجدي يمتد لنهاية السنة
+        ("♈ الحمل", (3, 21), (4, 19)),
+        ("♉ الثور", (4, 20), (5, 20)),
+        ("♊ الجوزاء", (5, 21), (6, 20)),
+        ("♋ السرطان", (6, 21), (7, 22)),
+        ("♌ الأسد", (7, 23), (8, 22)),
+        ("♍ العذراء", (8, 23), (9, 22)),
+        ("♎ الميزان", (9, 23), (10, 22)),
+        ("♏ العقرب", (10, 23), (11, 21)),
+        ("♐ القوس", (11, 22), (12, 21)),
+        ("♑ الجدي", (12, 22), (1, 19)),
+        ("♒ الدلو", (1, 20), (2, 18)),
+        ("♓ الحوت", (2, 19), (3, 20))
     ]
-    current_month = today.month
-    current_day = today.day
-    for name, start, end, icon in zodiacs:
-        start_month, start_day = start
-        end_month, end_day = end
-        if (current_month == start_month and current_day >= start_day) or \
-           (current_month == end_month and current_day <= end_day) or \
-           (current_month > start_month and current_month < end_month):
-            return {"name": name, "icon": icon}
-    return {"name": "الجدي", "icon": "♑️"}  # افتراضي
+    y = today.year
+    for name, start, end in zodiacs:
+        start_date = date(y, start[0], start[1])
+        end_date = date(y, end[0], end[1])
+        if start_date <= today <= end_date:
+            return name
+        # حالة خاصة للجدي الذي يمتد عبر نهاية السنة
+        if name == "♑ الجدي" and (today >= date(y, 12, 22) or today <= date(y, 1, 19)):
+            return name
+    return "♈ الحمل"  # افتراضي
 
 @st.cache_data(ttl=86400)
 def get_city_name_cached(lat, lon):
@@ -251,8 +250,7 @@ prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 tawalee_list = get_tawalee_data()
 tawalee_json = json.dumps(tawalee_list, ensure_ascii=False)
 
-zodiac_data = get_current_zodiac()
-zodiac_json = json.dumps(zodiac_data, ensure_ascii=False)
+zodiac_current = get_zodiac_data()
 
 city_name = get_city_name_cached(st.session_state.lat, st.session_state.lon)
 
@@ -310,10 +308,10 @@ html_code = f"""
             width: 90%;
             max-width: 500px;
             z-index: 1;
-            background: rgba(0,0,0,0.125); /* شفافية 25% من 0.5 */
+            background: rgba(0,0,0,0.1);
             backdrop-filter: blur(8px);
             border-radius: 40px;
-            border: 1px solid rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             overflow: hidden;
         }}
@@ -322,20 +320,9 @@ html_code = f"""
             width: 100%;
             height: auto;
             display: block;
-            opacity: 0.25; /* شفافية 25% (نصف 50%) */
+            opacity: 0.25;
             mix-blend-mode: normal;
             filter: none;
-        }}
-
-        #watermark-cover {{
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            width: 120px;
-            height: 40px;
-            background-color: black;
-            z-index: 2;
-            opacity: 1;
         }}
 
         .main-container {{
@@ -348,7 +335,7 @@ html_code = f"""
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 18vh 16px 0 16px;
+            padding: 24vh 16px 0 16px;
             margin: 0 auto;
             color: white;
             pointer-events: none;
@@ -369,7 +356,7 @@ html_code = f"""
         }}
 
         .time-card {{
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             margin-top: 0;
         }}
         .time-display {{
@@ -442,25 +429,24 @@ html_code = f"""
             font-size: 1.1rem;
         }}
 
-        /* حاوية الطواليع + البرج (4 بطاقات) */
-        .tawalee-zodiac-container {{
+        /* بطاقات الطواليع والأبراج */
+        .tawalee-container {{
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
+            justify-content: center;
             align-items: stretch;
             gap: 6px;
-            width: 100%;
             margin-top: 8px;
+            flex-wrap: wrap;
         }}
         .tawalee-item, .zodiac-item {{
             background: rgba(0,0,0,0.3);
             backdrop-filter: blur(5px);
-            padding: 6px 4px;
+            padding: 6px 10px;
             border-radius: 30px;
             border: 1px solid rgba(255,255,255,0.2);
             text-align: center;
-            flex: 1;
-            min-width: 0;
+            min-width: 80px;
+            flex: 1 0 70px;
         }}
         .tawalee-icon, .zodiac-icon {{ font-size: 1.4rem; display: block; }}
         .tawalee-name, .zodiac-name {{ font-weight: bold; font-size: 0.9rem; }}
@@ -503,7 +489,7 @@ html_code = f"""
         }}
 
         @media (max-width: 480px) {{
-            .main-container {{ padding: 18vh 10px 0 10px; }}
+            .main-container {{ padding: 24vh 10px 0 10px; }}
             .time-display {{ font-size: 2.2rem; }}
             .ampm-display {{ font-size: 1.8rem; }}
             .cards-grid {{ gap: 4px; }}
@@ -512,8 +498,7 @@ html_code = f"""
             .prayer-name {{ font-size: 1rem; }}
             .prayer-time {{ font-size: 1.2rem; }}
             .weather-value {{ font-size: 1rem; }}
-            .tawalee-item, .zodiac-item {{ padding: 4px 2px; }}
-            .tawalee-name, .zodiac-name {{ font-size: 0.8rem; }}
+            .tawalee-item, .zodiac-item {{ min-width: 65px; padding: 5px 4px; }}
             .city-card {{ min-width: 80px; }}
         }}
     </style>
@@ -523,7 +508,6 @@ html_code = f"""
         <div class="bg-image"></div>
         <div class="video-card">
             {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else ''}
-            <div id="watermark-cover"></div>
         </div>
     </div>
 
@@ -565,10 +549,13 @@ html_code = f"""
             </div>
         </div>
 
-        <!-- صف الطواليع + البرج (4 بطاقات) -->
-        <div id="tawalee-zodiac-container" class="tawalee-zodiac-container">
-            <!-- الطواليع الثلاثة ستضاف هنا بواسطة JS -->
-            <!-- بطاقة البرج ستضاف هنا أيضًا -->
+        <!-- صف الطواليع + البرج الحالي (4 بطاقات) -->
+        <div id="tawalee-container" class="tawalee-container"></div>
+        <div class="tawalee-container" style="margin-top: 5px;">
+            <div class="zodiac-item">
+                <span class="zodiac-icon">{zodiac_current.split()[0]}</span>
+                <div class="zodiac-name">{zodiac_current}</div>
+            </div>
         </div>
 
         <!-- بطاقة المدينة -->
@@ -588,13 +575,10 @@ html_code = f"""
         const prayerTimes = {prayer_json};
         const TIMEZONE = 'Asia/Riyadh';
         const tawaleeData = {tawalee_json};
-        const zodiacData = {zodiac_json};
 
-        function renderTawaleeAndZodiac() {{
-            const container = document.getElementById('tawalee-zodiac-container');
+        function renderTawalee() {{
+            const container = document.getElementById('tawalee-container');
             container.innerHTML = '';
-            
-            // إضافة بطاقات الطواليع الثلاث (من اليمين)
             tawaleeData.forEach(item => {{
                 const div = document.createElement('div');
                 div.className = 'tawalee-item';
@@ -605,16 +589,6 @@ html_code = f"""
                 `;
                 container.appendChild(div);
             }});
-
-            // إضافة بطاقة البرج (أقصى اليسار)
-            const zodiacDiv = document.createElement('div');
-            zodiacDiv.className = 'zodiac-item';
-            zodiacDiv.innerHTML = `
-                <span class="zodiac-icon">${{zodiacData.icon}}</span>
-                <div class="zodiac-name">${{zodiacData.name}}</div>
-                <div class="tawalee-days">برجك اليوم</div>
-            `;
-            container.appendChild(zodiacDiv);
         }}
 
         function updateClock() {{
@@ -651,7 +625,7 @@ html_code = f"""
             setTimeout(() => {{ location.reload(); }}, timeUntilMidnight);
         }}
 
-        renderTawaleeAndZodiac();
+        renderTawalee();
         updateClock();
         setInterval(updateClock, 1000);
         scheduleMidnightRefresh();
