@@ -173,7 +173,7 @@ prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 video_path = "ARRR1.mp4"
 video_base64 = get_video_base64(video_path)
 
-# --- HTML + CSS (الخلفية بأبعاد 540x960 مع تغطية كاملة) ---
+# --- HTML + CSS (الأبعاد الجديدة: 270x480) ---
 html_code = f"""
 <!DOCTYPE html>
 <html dir="rtl">
@@ -190,7 +190,7 @@ html_code = f"""
             font-family: 'Tajawal', sans-serif;
         }}
 
-        /* حاوية الخلفية - تجعل العنصر يغطي الشاشة بالكامل */
+        /* حاوية الخلفية */
         .background-container {{
             position: fixed;
             top: 0;
@@ -202,17 +202,16 @@ html_code = f"""
             background-color: black;
         }}
 
-        /* الفيديو: يحدد العرض والارتفاع 540x960 ثم يغطي الشاشة مع الحفاظ على النسبة */
+        /* الفيديو: أبعاد 270x480 ثم تغطية الشاشة */
         #bgVideo {{
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 540px;
-            height: 960px;
+            width: 270px;
+            height: 480px;
             object-fit: cover;
             transform: translate(-50%, -50%);
             filter: brightness(0.5);
-            /* إذا كانت الشاشة أكبر، فإن الفيديو سيتمدد تلقائياً بسبب min-width/min-height */
             min-width: 100%;
             min-height: 100%;
             width: auto;
@@ -224,8 +223,8 @@ html_code = f"""
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 540px;
-            height: 960px;
+            width: 270px;
+            height: 480px;
             background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
             background-size: cover;
             background-position: center 40%;
