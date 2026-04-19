@@ -5,6 +5,8 @@ from datetime import datetime, date, timedelta
 import requests
 from hijri_converter import Gregorian
 import json
+import base64
+import os
 
 # --- إعداد الصفحة ---
 st.set_page_config(page_title="ساعة الأرض - aale1164", layout="wide")
@@ -68,6 +70,18 @@ def get_season_data():
             return ar, en, (s_date - today).days, icon
     next_spring = date(y + 1, 3, 21)
     return 'الربيع', 'Spring', (next_spring - today).days, '🌸'
+
+# --- دالة لتحويل الفيديو إلى Base64 ---
+@st.cache_data
+def get_video_base64(video_path):
+    """تحويل ملف الفيديو إلى نص Base64 لتضمينه في HTML"""
+    try:
+        with open(video_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except Exception as e:
+        st.warning(f"لم يتم العثور على ملف الفيديو '{video_path}'. سيتم استخدام خلفية ثابتة.")
+        return None
 
 # --- إدارة حالة الموقع الجغرافي ---
 if 'lat' not in st.session_state:
@@ -164,7 +178,42 @@ season_ar, season_en, days_left, season_icon = get_season_data()
 
 prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 
-# --- HTML + CSS + JavaScript (بدون فيديو، خلفية الصورة الأصلية) ---
+# --- معالجة الفيديو (إذا كان موجوداً) ---
+video_path = "ARRR1.mp4"
+video_base64 = get_video_base64(video_path)
+
+# إذا كان الفيديو متاحاً، نستخدمه كخلفية في HTML
+if video_base64:
+    background_style = f"""
+        <video autoplay loop muted playsinline id="bgVideo">
+            <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+        </video>
+    """
+    background_css = """
+        #bgVideo {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            filter: brightness(0.45); /* تعتيم لتحسين وضوح النص */
+            object-fit: cover;
+        }
+    """
+else:
+    # خلفية احتياطية: الصورة الثابتة من GitHub
+    background_style = ""
+    background_css = """
+        body {
+            background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
+            background-size: cover;
+            background-position: center 40%;
+            background-attachment: fixed;
+        }
+    """
+
+# --- HTML + CSS + JavaScript (مع فيديو أو صورة حسب الحال) ---
 html_code = f"""
 <!DOCTYPE html>
 <html dir="rtl">
@@ -176,10 +225,6 @@ html_code = f"""
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{
             font-family: 'Tajawal', sans-serif;
-            background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
-            background-size: cover;
-            background-position: center 40%;
-            background-attachment: fixed;
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
@@ -188,6 +233,7 @@ html_code = f"""
             overflow: hidden;
             padding: 5vh 16px 0 16px;
         }}
+        {background_css}
         .main-container {{
             width: 100%;
             max-width: 600px;
@@ -196,6 +242,8 @@ html_code = f"""
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
+            position: relative;
+            z-index: 1;
         }}
         .text-shadow {{
             text-shadow: 2px 2px 12px rgba(0,0,0,0.8);
@@ -307,6 +355,7 @@ html_code = f"""
     </style>
 </head>
 <body>
+    {background_style}
     <div class="main-container">
         <!-- الوقت مع AM/PM فقط -->
         <div class="text-shadow time-container">
