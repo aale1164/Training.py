@@ -187,29 +187,30 @@ html_code = f"""
             background-color: black;
         }}
 
+        /* الفيديو بحجم نصف الشاشة في الأعلى والمنتصف */
         #bgVideo {{
             position: absolute;
-            top: 56%;               /* تم ضبطها لتظهر تحت عبارة "63 days left for Summer" */
+            top: 0;
             left: 50%;
-            width: 135px;
-            height: 240px;
+            width: 50vw;
+            height: 50vh;
             object-fit: contain;
-            transform: translate(-50%, -50%);
-            filter: brightness(0.6);
+            transform: translateX(-50%);
+            filter: brightness(0.7);
             background-color: black;
         }}
 
         .bg-image {{
             position: absolute;
-            top: 56%;
+            top: 0;
             left: 50%;
-            width: 135px;
-            height: 240px;
+            width: 50vw;
+            height: 50vh;
             background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             filter: brightness(0.8);
             background-color: black;
         }}
