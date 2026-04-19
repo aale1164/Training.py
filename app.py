@@ -6,7 +6,6 @@ import requests
 from hijri_converter import Gregorian
 import json
 import base64
-import os
 
 # --- إعداد الصفحة ---
 st.set_page_config(page_title="ساعة الأرض - aale1164", layout="wide")
@@ -74,13 +73,11 @@ def get_season_data():
 # --- دالة لتحويل الفيديو إلى Base64 ---
 @st.cache_data
 def get_video_base64(video_path):
-    """تحويل ملف الفيديو إلى نص Base64 لتضمينه في HTML"""
     try:
         with open(video_path, "rb") as f:
             data = f.read()
         return base64.b64encode(data).decode()
-    except Exception as e:
-        st.warning(f"لم يتم العثور على ملف الفيديو '{video_path}'. سيتم استخدام خلفية ثابتة.")
+    except:
         return None
 
 # --- إدارة حالة الموقع الجغرافي ---
@@ -140,13 +137,11 @@ if not st.session_state.location_checked:
 now = datetime.now(sa_tz)
 today = now.date()
 
-# اليوم بالعربية والإنجليزية
 weekdays_ar = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
 weekdays_en = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 day_ar = weekdays_ar[today.weekday()]
 day_en = weekdays_en[today.weekday()]
 
-# التاريخ الهجري والميلادي
 try:
     h = Gregorian.fromdate(today).to_hijri()
     hij_str = f"{h.day}/{h.month}/{h.year} هـ"
@@ -154,11 +149,9 @@ except:
     hij_str = "--/--/---- هـ"
 mil_str = f"{today.day}/{today.month}/{today.year} م"
 
-# الطقس
 temp = fetch_weather_cached(st.session_state.lat, st.session_state.lon)
 weather_str = f"{temp}°C" if temp is not None else "--°C"
 
-# مواقيت الصلاة
 prayer_times_data = fetch_prayer_times_cached(st.session_state.lat, st.session_state.lon, today.strftime("%d-%m-%Y"))
 sunrise = sunset = "--:--"
 prayer_dict = {}
@@ -173,47 +166,14 @@ if prayer_times_data:
         'العشاء': prayer_times_data.get('Isha', '--:--')
     }
 
-# الفصل
 season_ar, season_en, days_left, season_icon = get_season_data()
-
 prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 
-# --- معالجة الفيديو (إذا كان موجوداً) ---
+# --- معالجة الفيديو (ARRR1.mp4) ---
 video_path = "ARRR1.mp4"
 video_base64 = get_video_base64(video_path)
 
-# إذا كان الفيديو متاحاً، نستخدمه كخلفية في HTML
-if video_base64:
-    background_style = f"""
-        <video autoplay loop muted playsinline id="bgVideo">
-            <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
-        </video>
-    """
-    background_css = """
-        #bgVideo {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            z-index: -1;
-            filter: brightness(0.45); /* تعتيم لتحسين وضوح النص */
-            object-fit: cover;
-        }
-    """
-else:
-    # خلفية احتياطية: الصورة الثابتة من GitHub
-    background_style = ""
-    background_css = """
-        body {
-            background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
-            background-size: cover;
-            background-position: center 40%;
-            background-attachment: fixed;
-        }
-    """
-
-# --- HTML + CSS + JavaScript (مع فيديو أو صورة حسب الحال) ---
+# --- HTML + CSS (تم ضبط الخلفية لمقاس 9:16) ---
 html_code = f"""
 <!DOCTYPE html>
 <html dir="rtl">
@@ -223,18 +183,60 @@ html_code = f"""
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{
-            font-family: 'Tajawal', sans-serif;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: white;
+        html, body {{
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            padding: 5vh 16px 0 16px;
+            font-family: 'Tajawal', sans-serif;
         }}
-        {background_css}
+
+        /* حاوية الفيديو أو الصورة بنسبة 9:16 */
+        .background-container {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: black; /* لون احتياطي */
+        }}
+
+        /* فيديو الخلفية */
+        #bgVideo {{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            filter: brightness(0.5); /* تعتيم لتحسين وضوح النصوص */
+        }}
+
+        /* صورة ثابتة في حال عدم وجود فيديو */
+        .bg-image {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
+            background-size: cover;
+            background-position: center 40%;
+            background-repeat: no-repeat;
+            filter: brightness(0.8);
+        }}
+
+        /* محتوى الواجهة فوق الخلفية */
         .main-container {{
+            position: relative;
+            z-index: 1;
             width: 100%;
             max-width: 600px;
             height: 100%;
@@ -242,9 +244,11 @@ html_code = f"""
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            position: relative;
-            z-index: 1;
+            padding: 5vh 16px 0 16px;
+            margin: 0 auto;
+            color: white;
         }}
+
         .text-shadow {{
             text-shadow: 2px 2px 12px rgba(0,0,0,0.8);
             text-align: center;
@@ -252,7 +256,7 @@ html_code = f"""
             line-height: 1.3;
         }}
 
-        /* الوقت الرئيسي */
+        /* الوقت */
         .time-container {{
             display: flex;
             align-items: baseline;
@@ -272,7 +276,7 @@ html_code = f"""
             font-weight: 700;
         }}
 
-        /* سطر متبقي على الصيف */
+        /* متبقي على الصيف */
         .season-main {{
             font-size: clamp(1.5rem, 6vw, 2.4rem);
             font-weight: 700;
@@ -287,7 +291,7 @@ html_code = f"""
             margin-top: 2px;
         }}
 
-        /* صف المعلومات (عمودين مع محاذاة مختلفة) */
+        /* صف المعلومات */
         .info-row {{
             display: flex;
             flex-direction: row;
@@ -305,15 +309,8 @@ html_code = f"""
             justify-content: flex-start;
             text-align: center;
         }}
-
-        /* العمود الأيمن: يميل إلى اليمين قليلاً */
-        .right-col {{
-            padding-left: 8%;
-        }}
-        /* العمود الأيسر: يميل إلى اليسار قليلاً */
-        .left-col {{
-            padding-right: 8%;
-        }}
+        .right-col {{ padding-left: 8%; }}
+        .left-col {{ padding-right: 8%; }}
 
         .day-ar {{ font-size: clamp(1.8rem, 7vw, 2.8rem); font-weight: 900; }}
         .day-en {{ font-size: clamp(1.1rem, 4.5vw, 1.8rem); opacity: 0.85; margin-top: 2px; }}
@@ -340,14 +337,13 @@ html_code = f"""
             transform: scale(1.05);
         }}
 
-        /* العمود الأيسر (الطقس) */
         .weather-item {{ margin: 8px 0; }}
         .weather-title {{ font-size: clamp(1.2rem, 5vw, 1.8rem); font-weight: bold; }}
         .weather-value {{ font-size: clamp(1rem, 4.5vw, 1.5rem); margin-top: 3px; }}
         .weather-label {{ font-size: clamp(0.8rem, 3.5vw, 1.1rem); opacity: 0.7; display: block; margin-top: 2px; }}
 
         @media (max-width: 480px) {{
-            body {{ padding: 4vh 12px 0 12px; }}
+            .main-container {{ padding: 4vh 12px 0 12px; }}
             .info-row {{ gap: 8px; }}
             .right-col {{ padding-left: 5%; }}
             .left-col {{ padding-right: 5%; }}
@@ -355,36 +351,33 @@ html_code = f"""
     </style>
 </head>
 <body>
-    {background_style}
+    <div class="background-container">
+        {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else '<div class="bg-image"></div>'}
+    </div>
+
     <div class="main-container">
-        <!-- الوقت مع AM/PM فقط -->
         <div class="text-shadow time-container">
             <span id="live-time" class="time-display">--:--:--</span>
             <span id="live-ampm" class="ampm-display"></span>
         </div>
 
-        <!-- متبقي على الصيف -->
         <div class="text-shadow season-main">
             {season_icon} متبقي على {season_ar}: {days_left} يوم
             <span class="season-main-sub">{days_left} days left for {season_en}</span>
         </div>
 
-        <!-- صف المعلومات (عمودين مع محاذاة مختلفة) -->
         <div class="info-row">
-            <!-- العمود الأيمن: التاريخ + روابط التواصل (يميل لليمين) -->
             <div class="info-col right-col">
                 <div class="text-shadow day-ar">{day_ar}</div>
                 <div class="text-shadow day-en">{day_en}</div>
                 <div class="text-shadow hijri-date">{hij_str}</div>
                 <div class="text-shadow miladi-date">{mil_str}</div>
-
                 <div class="social-links-vertical">
                     <a href="https://twitter.com/aale1164" target="_blank">𝕏 @aale1164</a>
                     <a href="https://www.snapchat.com/add/aale112" target="_blank">👻 aale112</a>
                 </div>
             </div>
 
-            <!-- العمود الأيسر: الطقس والشروق والغروب (يميل لليسار) -->
             <div class="info-col left-col">
                 <div class="weather-item">
                     <div class="text-shadow weather-title">🌡️ {weather_str}</div>
