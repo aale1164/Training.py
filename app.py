@@ -274,8 +274,9 @@ html_code = f"""
             width: 100%;
             height: auto;
             display: block;
-            mix-blend-mode: multiply;
-            filter: brightness(1.2);
+            opacity: 0.5;
+            mix-blend-mode: normal;
+            filter: none;
         }}
 
         #watermark-cover {{
@@ -299,7 +300,7 @@ html_code = f"""
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 28vh 16px 0 16px;
+            padding: 18vh 16px 0 16px;
             margin: 0 auto;
             color: white;
             pointer-events: none;
@@ -437,7 +438,7 @@ html_code = f"""
         }}
 
         @media (max-width: 480px) {{
-            .main-container {{ padding: 28vh 10px 0 10px; }}
+            .main-container {{ padding: 18vh 10px 0 10px; }}
             .time-display {{ font-size: 2.2rem; }}
             .ampm-display {{ font-size: 1.8rem; }}
             .cards-grid {{ gap: 5px; }}
