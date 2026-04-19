@@ -213,7 +213,7 @@ html_code = f"""
             z-index: -2;
         }}
 
-        /* الفيديو بشفافية 50% */
+        /* الفيديو مع إخفاء الخلفية السوداء */
         #bgVideo {{
             position: absolute;
             top: 0;
@@ -222,7 +222,7 @@ html_code = f"""
             height: 100vh;
             object-fit: contain;
             transform: translateX(-50%);
-            opacity: 0.5;
+            mix-blend-mode: screen;  /* يجعل اللون الأسود شفافًا */
             z-index: -1;
         }}
 
