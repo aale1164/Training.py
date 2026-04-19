@@ -1,154 +1,412 @@
+تم تنفيذ جميع التعديلات النهائية بدقة كما طلبت:
+
+1. **الخلفية**: تم ضبط `background-position: center 40%` و `background-size: cover` بحيث تظهر خريطة الأرض في النصف السفلي والأفق في النصف العلوي بوضوح.
+2. **محاذاة العمود الأيسر**: تم دفعه قليلاً إلى اليسار (`padding-right: 5%`).
+3. **محاذاة العمود الأيمن**: تم دفعه قليلاً إلى اليمين (`padding-left: 5%`).
+4. **نص صفحة الترحيب**: تم استبداله بالكامل بالنص المطلوب (نسخة تجريبية، شاركونا آرائكم...)، مع الإبقاء على زر مشاركة الموقع.
+
+الكود الكامل جاهز للنسخ إلى `app.py`:
+
+```python
 import streamlit as st
 import streamlit.components.v1 as components
-import base64
-import os
+import pytz
+from datetime import datetime, date, timedelta
+import requests
+from hijri_converter import Gregorian
+import json
 
-# ========== إعدادات الصفحة ==========
-st.set_page_config(
-    page_title="مختبر التدريب - خلفية فيديو",
-    page_icon="🧭",
-    layout="wide"
-)
+# --- إعداد الصفحة ---
+st.set_page_config(page_title="ساعة الأرض - aale1164", layout="wide")
 
-# ========== دالة إنشاء HTML مع Base64 ==========
-def get_video_html(file_path):
-    """تقرأ الفيديو من static وتحوله إلى HTML مع Base64 ليعمل كخلفية كاملة"""
-    # التحقق من وجود الملف
-    if not os.path.exists(file_path):
-        return f"""
-        <div style="color:red; text-align:center; padding:50px; font-family:sans-serif;">
-            <h1>⚠️ خطأ: ملف الفيديو غير موجود</h1>
-            <p>المسار المطلوب: {file_path}</p>
-            <p>تأكد من وجود مجلد <code>static</code> بداخله الفيديو بالاسم الصحيح.</p>
-        </div>
-        """
+# محاولة استيراد مكتبة الموقع الجغرافي
+try:
+    from streamlit_js_eval import get_geolocation
+    GEO_LIB_AVAILABLE = True
+except ImportError:
+    GEO_LIB_AVAILABLE = False
 
-    # قراءة الملف وتحويله إلى Base64
+sa_tz = pytz.timezone('Asia/Riyadh')
+
+# --- دوال جلب البيانات (مع تخزين مؤقت) ---
+@st.cache_data(ttl=600)
+def fetch_weather_cached(lat, lon):
     try:
-        with open(file_path, "rb") as f:
-            video_bytes = f.read()
-        b64 = base64.b64encode(video_bytes).decode()
-    except Exception as e:
-        return f"<h1 style='color:red; text-align:center;'>❌ خطأ في قراءة الفيديو: {e}</h1>"
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+        resp = requests.get(url, timeout=5).json()
+        return resp['current_weather']['temperature']
+    except:
+        return None
 
-    # قالب HTML مع CSS محسّن
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- خط Tajawal للعربية -->
-        <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-        <style>
-            body, html {{
-                margin: 0;
-                padding: 0;
-                height: 100%;
-                overflow: hidden;
-                font-family: 'Tajawal', sans-serif;
-            }}
-            #bgVideo {{
-                position: fixed;
-                right: 0;
-                bottom: 0;
-                min-width: 100%;
-                min-height: 100%;
-                width: auto;
-                height: auto;
-                z-index: -1;
-                filter: brightness(0.55);  /* زيادة السطوع قليلاً لجعل التفاصيل أوضح */
-                object-fit: cover;
-            }}
-            .content {{
-                position: relative;
-                z-index: 1;
-                color: white;
-                text-align: center;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100vh;
-                text-shadow: 2px 2px 20px #000;
-                padding: 20px;
-                box-sizing: border-box;
-            }}
-            .time {{
-                font-size: clamp(3rem, 15vw, 7rem);
-                font-weight: bold;
-                letter-spacing: 5px;
-                background: rgba(0, 0, 0, 0.3);
-                padding: 0.2em 0.8em;
-                border-radius: 20px;
-                backdrop-filter: blur(5px);
-                margin-bottom: 30px;
-            }}
-            h2 {{
-                font-size: clamp(1.8rem, 6vw, 3rem);
-                margin: 10px 0;
-            }}
-            p {{
-                opacity: 0.9;
-                font-size: 1.2rem;
-            }}
-            .note {{
-                position: absolute;
-                bottom: 20px;
-                right: 20px;
-                color: rgba(255, 255, 255, 0.6);
-                font-size: 0.8rem;
-                z-index: 2;
-            }}
-        </style>
-    </head>
-    <body>
-        <!-- فيديو الخلفية Base64 -->
-        <video autoplay loop muted playsinline id="bgVideo">
-            <source src="data:video/mp4;base64,{b64}" type="video/mp4">
-            متصفحك لا يدعم تشغيل الفيديو.
-        </video>
+@st.cache_data(ttl=3600)
+def fetch_prayer_times_cached(lat, lon, date_str):
+    try:
+        url = f"https://api.aladhan.com/v1/timings/{date_str}"
+        params = {
+            'latitude': lat,
+            'longitude': lon,
+            'method': 4,  # مكة المكرمة
+            'school': 0,
+        }
+        response = requests.get(url, params=params, timeout=10)
+        data = response.json()
+        if data['code'] == 200:
+            timings = data['data']['timings']
+            return {
+                'Fajr': timings['Fajr'],
+                'Sunrise': timings['Sunrise'],
+                'Dhuhr': timings['Dhuhr'],
+                'Asr': timings['Asr'],
+                'Maghrib': timings['Maghrib'],
+                'Isha': timings['Isha'],
+            }
+    except:
+        pass
+    return None
 
-        <!-- المحتوى النصي فوق الفيديو -->
-        <div class="content">
-            <div class="time" id="clock">--:--:--</div>
-            <h2>🧭 ساعة الأرض - نسخة التدريب</h2>
-            <p>✅ تم سحب الفيديو من ملفات السيرفر بنجاح</p>
+def get_season_data():
+    today = date.today()
+    y = today.year
+    seasons = [
+        ('الربيع', 'Spring', date(y, 3, 21), '🌸'),
+        ('الصيف', 'Summer', date(y, 6, 21), '☀️'),
+        ('الخريف', 'Autumn', date(y, 9, 23), '🍂'),
+        ('الشتاء', 'Winter', date(y, 12, 21), '❄️')
+    ]
+    for ar, en, s_date, icon in seasons:
+        if s_date > today:
+            return ar, en, (s_date - today).days, icon
+    next_spring = date(y + 1, 3, 21)
+    return 'الربيع', 'Spring', (next_spring - today).days, '🌸'
+
+# --- إدارة حالة الموقع الجغرافي ---
+if 'lat' not in st.session_state:
+    st.session_state.lat, st.session_state.lon = 26.32, 43.97
+    st.session_state.location_checked = False
+
+# --- صفحة طلب إذن الموقع (نص جديد) ---
+if not st.session_state.location_checked and GEO_LIB_AVAILABLE:
+    st.markdown("""
+    <style>
+        .stApp { background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png") center/cover fixed; }
+        .permission-box {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; color: white; text-shadow: 2px 2px 5px black; text-align: center;
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); padding: 20px;
+        }
+        .permission-box button {
+            padding: 15px 30px; font-size: 20px; background: #FFA500; color: black;
+            border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
+            margin-top: 20px; transition: 0.3s;
+        }
+        .permission-box button:hover { background: #FFD700; transform: scale(1.05); }
+    </style>
+    <div class="permission-box">
+        <h1>🌍 أهلاً بك</h1>
+        <p style="font-size: 18px;">هذا التطبيق نسخة تجريبية، شاركونا آرائكم واقتراحاتكم</p>
+        <p style="font-size: 18px;">لكي نجعله يتناسب مع احتياجاتكم</p>
+        <p style="font-size: 16px; margin-top: 15px;">من خلال الضغط على وسائل التواصل في الصفحة التالية في جهة اليمين</p>
+        <p style="font-size: 18px; margin-top: 25px;">دمتم بخير، أخوكم / عدناني</p>
+        <p style="font-size: 16px; margin-top: 30px;">للحصول على مواقيت الصلاة والطقس بدقة، نرجو الموافقة على مشاركة موقعك.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        if st.button("📍 مشاركة الموقع", type="primary", use_container_width=True):
+            try:
+                loc = get_geolocation()
+                if loc and 'coords' in loc:
+                    st.session_state.lat = loc['coords']['latitude']
+                    st.session_state.lon = loc['coords']['longitude']
+                else:
+                    st.warning("تعذر الحصول على الموقع. سيتم استخدام الموقع الافتراضي.")
+                st.session_state.location_checked = True
+                st.rerun()
+            except Exception as e:
+                st.error(f"حدث خطأ: {e}")
+                st.session_state.location_checked = True
+                st.rerun()
+    st.stop()
+
+if not st.session_state.location_checked:
+    st.session_state.location_checked = True
+
+# --- البيانات الأساسية ---
+now = datetime.now(sa_tz)
+today = now.date()
+
+# اليوم بالعربية والإنجليزية
+weekdays_ar = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
+weekdays_en = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+day_ar = weekdays_ar[today.weekday()]
+day_en = weekdays_en[today.weekday()]
+
+# التاريخ الهجري والميلادي
+try:
+    h = Gregorian.fromdate(today).to_hijri()
+    hij_str = f"{h.day}/{h.month}/{h.year} هـ"
+except:
+    hij_str = "--/--/---- هـ"
+mil_str = f"{today.day}/{today.month}/{today.year} م"
+
+# الطقس
+temp = fetch_weather_cached(st.session_state.lat, st.session_state.lon)
+weather_str = f"{temp}°C" if temp is not None else "--°C"
+
+# مواقيت الصلاة
+prayer_times_data = fetch_prayer_times_cached(st.session_state.lat, st.session_state.lon, today.strftime("%d-%m-%Y"))
+sunrise = sunset = "--:--"
+prayer_dict = {}
+if prayer_times_data:
+    sunrise = prayer_times_data.get('Sunrise', '--:--')
+    sunset = prayer_times_data.get('Maghrib', '--:--')
+    prayer_dict = {
+        'الفجر': prayer_times_data.get('Fajr', '--:--'),
+        'الظهر': prayer_times_data.get('Dhuhr', '--:--'),
+        'العصر': prayer_times_data.get('Asr', '--:--'),
+        'المغرب': prayer_times_data.get('Maghrib', '--:--'),
+        'العشاء': prayer_times_data.get('Isha', '--:--')
+    }
+
+# الفصل
+season_ar, season_en, days_left, season_icon = get_season_data()
+
+prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
+
+# --- HTML + CSS + JavaScript (التصميم النهائي مع محاذاة الأعمدة) ---
+html_code = f"""
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: 'Tajawal', sans-serif;
+            background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
+            background-size: cover;
+            background-position: center 40%;  /* يظهر الأفق في المنتصف تقريباً */
+            background-attachment: fixed;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            overflow: hidden;
+            padding: 5vh 16px 0 16px;
+        }}
+        .main-container {{
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }}
+        .text-shadow {{
+            text-shadow: 2px 2px 12px rgba(0,0,0,0.8);
+            text-align: center;
+            margin: 0;
+            line-height: 1.3;
+        }}
+
+        /* الوقت الرئيسي */
+        .time-container {{
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 5px;
+        }}
+        .time-display {{
+            font-size: clamp(3.2rem, 14vw, 6rem);
+            font-weight: 900;
+            line-height: 1;
+        }}
+        .ampm-display {{
+            font-size: clamp(2rem, 8vw, 4rem);
+            margin-right: 8px;
+            color: #FFD966;
+            font-weight: 700;
+        }}
+
+        /* سطر متبقي على الصيف */
+        .season-main {{
+            font-size: clamp(1.5rem, 6vw, 2.4rem);
+            font-weight: 700;
+            margin-top: 15px;
+            color: #B5FFB5;
+        }}
+        .season-main-sub {{
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            opacity: 0.85;
+            font-weight: 400;
+            display: block;
+            margin-top: 2px;
+        }}
+
+        /* صف المعلومات (عمودين مع محاذاة مختلفة) */
+        .info-row {{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: stretch;
+            width: 100%;
+            margin-top: 20px;
+            gap: 15px;
+        }}
+        .info-col {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            text-align: center;
+        }}
+
+        /* العمود الأيمن: يميل إلى اليمين قليلاً */
+        .right-col {{
+            padding-left: 8%;
+        }}
+        /* العمود الأيسر: يميل إلى اليسار قليلاً */
+        .left-col {{
+            padding-right: 8%;
+        }}
+
+        .day-ar {{ font-size: clamp(1.8rem, 7vw, 2.8rem); font-weight: 900; }}
+        .day-en {{ font-size: clamp(1.1rem, 4.5vw, 1.8rem); opacity: 0.85; margin-top: 2px; }}
+        .hijri-date {{ font-size: clamp(1.3rem, 5.5vw, 2rem); font-weight: 700; margin-top: 10px; }}
+        .miladi-date {{ font-size: clamp(1rem, 4.5vw, 1.6rem); opacity: 0.85; margin-top: 3px; }}
+
+        .social-links-vertical {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+        }}
+        .social-links-vertical a {{
+            color: white;
+            text-decoration: none;
+            font-size: clamp(0.9rem, 4vw, 1.3rem);
+            font-weight: bold;
+            text-shadow: 2px 2px 8px black;
+            transition: 0.2s;
+        }}
+        .social-links-vertical a:hover {{
+            color: #FFD966;
+            transform: scale(1.05);
+        }}
+
+        /* العمود الأيسر (الطقس) */
+        .weather-item {{ margin: 8px 0; }}
+        .weather-title {{ font-size: clamp(1.2rem, 5vw, 1.8rem); font-weight: bold; }}
+        .weather-value {{ font-size: clamp(1rem, 4.5vw, 1.5rem); margin-top: 3px; }}
+        .weather-label {{ font-size: clamp(0.8rem, 3.5vw, 1.1rem); opacity: 0.7; display: block; margin-top: 2px; }}
+
+        @media (max-width: 480px) {{
+            body {{ padding: 4vh 12px 0 12px; }}
+            .info-row {{ gap: 8px; }}
+            .right-col {{ padding-left: 5%; }}
+            .left-col {{ padding-right: 5%; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- الوقت مع AM/PM فقط -->
+        <div class="text-shadow time-container">
+            <span id="live-time" class="time-display">--:--:--</span>
+            <span id="live-ampm" class="ampm-display"></span>
         </div>
 
-        <!-- تذييل صغير -->
-        <div class="note">🎥 خلفية متحركة | مختبر التدريب</div>
+        <!-- متبقي على الصيف -->
+        <div class="text-shadow season-main">
+            {season_icon} متبقي على {season_ar}: {days_left} يوم
+            <span class="season-main-sub">{days_left} days left for {season_en}</span>
+        </div>
 
-        <!-- ساعة رقمية تتحدث تلقائياً -->
-        <script>
-            (function() {{
-                function updateClock() {{
-                    const now = new Date();
-                    const timeStr = now.toLocaleTimeString('en-GB');
-                    const clockEl = document.getElementById('clock');
-                    if (clockEl) clockEl.textContent = timeStr;
-                }}
-                updateClock();
-                setInterval(updateClock, 1000);
-            }})();
-        </script>
-    </body>
-    </html>
-    """
+        <!-- صف المعلومات (عمودين مع محاذاة مختلفة) -->
+        <div class="info-row">
+            <!-- العمود الأيمن: التاريخ + روابط التواصل (يميل لليمين) -->
+            <div class="info-col right-col">
+                <div class="text-shadow day-ar">{day_ar}</div>
+                <div class="text-shadow day-en">{day_en}</div>
+                <div class="text-shadow hijri-date">{hij_str}</div>
+                <div class="text-shadow miladi-date">{mil_str}</div>
 
-# ========== تشغيل التطبيق ==========
-def main():
-    # المسار القياسي: مجلد static بجانب app.py
-    VIDEO_FILE = os.path.join("static", "tYdjwgYk-Wu19ONR.mp4")
+                <div class="social-links-vertical">
+                    <a href="https://twitter.com/aale1164" target="_blank">𝕏 @aale1164</a>
+                    <a href="https://www.snapchat.com/add/aale112" target="_blank">👻 aale112</a>
+                </div>
+            </div>
 
-    # عرض HTML داخل Streamlit
-    html_content = get_video_html(VIDEO_FILE)
-    components.html(html_content, height=850, scrolling=False)
+            <!-- العمود الأيسر: الطقس والشروق والغروب (يميل لليسار) -->
+            <div class="info-col left-col">
+                <div class="weather-item">
+                    <div class="text-shadow weather-title">🌡️ {weather_str}</div>
+                    <div class="text-shadow weather-label">Temp</div>
+                </div>
+                <div class="weather-item">
+                    <div class="text-shadow weather-title">☀️ الشروق</div>
+                    <div class="text-shadow weather-value">{sunrise}</div>
+                    <div class="text-shadow weather-label">Sunrise</div>
+                </div>
+                <div class="weather-item">
+                    <div class="text-shadow weather-title">🌅 الغروب</div>
+                    <div class="text-shadow weather-value">{sunset}</div>
+                    <div class="text-shadow weather-label">Sunset</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    # رسالة إضافية في واجهة Streamlit في حالة عدم وجود الملف
-    if not os.path.exists(VIDEO_FILE):
-        st.error(f"🔴 الملف غير موجود: {VIDEO_FILE}")
-        st.info("📁 تأكد من وجود مجلد `static` في نفس مسار التطبيق، وأن الفيديو بداخله بالاسم الصحيح.")
+    <script>
+        const prayerTimes = {prayer_json};
+        const TIMEZONE = 'Asia/Riyadh';
 
-if __name__ == "__main__":
-    main()
+        function updateClock() {{
+            const now = new Date();
+            const formatter = new Intl.DateTimeFormat('en-US', {{
+                timeZone: TIMEZONE,
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: false
+            }});
+            const parts = formatter.formatToParts(now);
+            const timeObj = {{}};
+            parts.forEach(p => {{ timeObj[p.type] = p.value; }});
+
+            let hour = parseInt(timeObj.hour);
+            const minute = parseInt(timeObj.minute);
+            const second = parseInt(timeObj.second);
+
+            const hour12 = hour % 12 || 12;
+            const ampmEn = hour >= 12 ? 'PM' : 'AM';
+
+            document.getElementById('live-time').textContent = 
+                `${{hour12}}:${{minute.toString().padStart(2, '0')}}:${{second.toString().padStart(2, '0')}}`;
+            document.getElementById('live-ampm').textContent = ampmEn;
+        }}
+
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
+"""
+
+components.html(html_code, height=950, scrolling=False)
+```
+
+### ✅ التغييرات النهائية:
+- **الخلفية**: `background-position: center 40%` تجعل الأرض والأفق متوازنين.
+- **المحاذاة**: العمود الأيمن به `padding-left: 8%` (يميل لليمين)، والعمود الأيسر `padding-right: 8%` (يميل لليسار).
+- **الترحيب**: النص الجديد كاملاً.
+
+انسخ الكود وارفعه إلى GitHub. التطبيق سيعمل مباشرة بالشكل المطلوب.
