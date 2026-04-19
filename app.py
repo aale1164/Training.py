@@ -274,7 +274,8 @@ html_code = f"""
             width: 100%;
             height: auto;
             display: block;
-            mix-blend-mode: screen;
+            mix-blend-mode: multiply;
+            filter: brightness(1.2);
         }}
 
         #watermark-cover {{
@@ -298,7 +299,7 @@ html_code = f"""
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 38vh 16px 0 16px;
+            padding: 28vh 16px 0 16px;
             margin: 0 auto;
             color: white;
             pointer-events: none;
@@ -436,7 +437,7 @@ html_code = f"""
         }}
 
         @media (max-width: 480px) {{
-            .main-container {{ padding: 38vh 10px 0 10px; }}
+            .main-container {{ padding: 28vh 10px 0 10px; }}
             .time-display {{ font-size: 2.2rem; }}
             .ampm-display {{ font-size: 1.8rem; }}
             .cards-grid {{ gap: 5px; }}
@@ -463,7 +464,7 @@ html_code = f"""
             <span id="live-ampm" class="ampm-display"></span>
         </div>
 
-        <!-- شبكة البطاقات: التاريخ والطقس (أسفل الفيديو مباشرة) -->
+        <!-- شبكة البطاقات: التاريخ والطقس -->
         <div class="cards-grid">
             <div class="card date-card">
                 <div class="day-ar">{day_ar}</div>
