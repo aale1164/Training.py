@@ -196,22 +196,25 @@ html_code = f"""
             height: 100%;
             z-index: -1;
             overflow: hidden;
-            background-color: black;
+            /* إزالة الخلفية السوداء، ستظهر الصورة فقط */
         }}
 
-        /* طبقة الصورة الخلفية (شفافة 50%) */
-        #bgImageLayer {{
+        /* صورة الخلفية الجديدة بشفافية 50% */
+        .bg-image {{
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            background-image: url('data:image/jpeg;base64,{image_base64}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             opacity: 0.5;
-            z-index: 0;
+            z-index: -2;
         }}
 
-        /* الفيديو فوق الصورة */
+        /* الفيديو بشفافية 50% */
         #bgVideo {{
             position: absolute;
             top: 0;
@@ -220,9 +223,8 @@ html_code = f"""
             height: 100vh;
             object-fit: contain;
             transform: translateX(-50%);
-            filter: brightness(0.7);
-            background-color: transparent;
-            z-index: 1;
+            opacity: 0.5;
+            z-index: -1;
         }}
 
         #watermark-cover {{
@@ -232,29 +234,13 @@ html_code = f"""
             width: 120px;
             height: 40px;
             background-color: black;
-            z-index: 2;
+            z-index: 0;
             opacity: 1;
-        }}
-
-        .bg-image-fallback {{
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 100vw;
-            height: 100vh;
-            background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-            transform: translateX(-50%);
-            filter: brightness(0.8);
-            background-color: black;
-            z-index: 1;
         }}
 
         .main-container {{
             position: relative;
-            z-index: 3;
+            z-index: 1;
             width: 100%;
             max-width: 600px;
             height: 100%;
@@ -367,12 +353,10 @@ html_code = f"""
 </head>
 <body>
     <div class="background-container">
-        <!-- الصورة الخلفية الثابتة بشفافية 50% -->
-        {f'<img id="bgImageLayer" src="data:image/jpeg;base64,{image_base64}" alt="Background">' if image_base64 else ''}
-        
-        <!-- الفيديو -->
-        {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else '<div class="bg-image-fallback"></div>'}
-        
+        <!-- صورة الخلفية بشفافية 50% -->
+        <div class="bg-image"></div>
+        <!-- الفيديو بشفافية 50% -->
+        {f'<video autoplay loop muted playsinline id="bgVideo"><source src="data:video/mp4;base64,{video_base64}" type="video/mp4"></video>' if video_base64 else ''}
         <!-- غطاء العلامة المائية -->
         <div id="watermark-cover"></div>
     </div>
