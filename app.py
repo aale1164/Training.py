@@ -189,11 +189,11 @@ html_code = f"""
 
         #bgVideo {{
             position: absolute;
-            top: 50%;
+            top: 42%;               /* رفع الفيديو قليلاً للأعلى ليتوسط بين Sunday و Temp */
             left: 50%;
             width: 135px;
             height: 240px;
-            object-fit: contain;       /* تغيير إلى contain لعرض الفيديو كاملاً دون قص */
+            object-fit: contain;
             transform: translate(-50%, -50%);
             filter: brightness(0.6);
             background-color: black;
@@ -201,7 +201,7 @@ html_code = f"""
 
         .bg-image {{
             position: absolute;
-            top: 50%;
+            top: 42%;
             left: 50%;
             width: 135px;
             height: 240px;
