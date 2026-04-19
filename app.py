@@ -84,7 +84,7 @@ def get_tawalee_data():
             diff = (start_date - today).days
         results.append({"name": name, "days": diff, "icon": icon})
     results.sort(key=lambda x: x['days'])
-    return results[:3]  # أول ثلاث طواليع قادمة
+    return results[:3]
 
 @st.cache_data
 def get_video_base64(video_path):
@@ -424,7 +424,7 @@ html_code = f"""
         </div>
 
         <div id="tawalee-container" class="tawalee-container">
-            <!-- سيتم ملؤها بواسطة JavaScript -->
+            <!-- يتم ملؤها ديناميكياً -->
         </div>
 
         <div class="info-row">
@@ -503,9 +503,21 @@ html_code = f"""
             document.getElementById('live-ampm').textContent = ampmEn;
         }}
 
+        function scheduleMidnightRefresh() {{
+            const now = new Date();
+            const nextMidnight = new Date(now);
+            nextMidnight.setDate(now.getDate() + 1);
+            nextMidnight.setHours(0, 0, 5, 0); // إعادة تحميل بعد 5 ثوانٍ من منتصف الليل
+            const timeUntilMidnight = nextMidnight - now;
+            setTimeout(() => {{
+                location.reload();
+            }}, timeUntilMidnight);
+        }}
+
         renderTawalee();
         updateClock();
         setInterval(updateClock, 1000);
+        scheduleMidnightRefresh();
     </script>
 </body>
 </html>
