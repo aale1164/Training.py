@@ -173,7 +173,7 @@ prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
 video_path = "ARRR1.mp4"
 video_base64 = get_video_base64(video_path)
 
-# --- HTML + CSS (تم ضبط الخلفية لمقاس 9:16) ---
+# --- HTML + CSS (الخلفية بأبعاد 540x960 مع تغطية كاملة) ---
 html_code = f"""
 <!DOCTYPE html>
 <html dir="rtl">
@@ -190,7 +190,7 @@ html_code = f"""
             font-family: 'Tajawal', sans-serif;
         }}
 
-        /* حاوية الفيديو أو الصورة بنسبة 9:16 */
+        /* حاوية الخلفية - تجعل العنصر يغطي الشاشة بالكامل */
         .background-container {{
             position: fixed;
             top: 0;
@@ -198,42 +198,46 @@ html_code = f"""
             width: 100%;
             height: 100%;
             z-index: -1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             overflow: hidden;
-            background-color: black; /* لون احتياطي */
+            background-color: black;
         }}
 
-        /* فيديو الخلفية */
+        /* الفيديو: يحدد العرض والارتفاع 540x960 ثم يغطي الشاشة مع الحفاظ على النسبة */
         #bgVideo {{
             position: absolute;
             top: 50%;
             left: 50%;
+            width: 540px;
+            height: 960px;
+            object-fit: cover;
+            transform: translate(-50%, -50%);
+            filter: brightness(0.5);
+            /* إذا كانت الشاشة أكبر، فإن الفيديو سيتمدد تلقائياً بسبب min-width/min-height */
             min-width: 100%;
             min-height: 100%;
             width: auto;
             height: auto;
-            transform: translate(-50%, -50%);
-            object-fit: cover;
-            filter: brightness(0.5); /* تعتيم لتحسين وضوح النصوص */
         }}
 
-        /* صورة ثابتة في حال عدم وجود فيديو */
+        /* صورة احتياطية بنفس الأبعاد */
         .bg-image {{
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            left: 50%;
+            width: 540px;
+            height: 960px;
             background: url("https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/background.png");
             background-size: cover;
             background-position: center 40%;
-            background-repeat: no-repeat;
+            transform: translate(-50%, -50%);
             filter: brightness(0.8);
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
         }}
 
-        /* محتوى الواجهة فوق الخلفية */
+        /* محتوى الواجهة */
         .main-container {{
             position: relative;
             z-index: 1;
@@ -256,7 +260,6 @@ html_code = f"""
             line-height: 1.3;
         }}
 
-        /* الوقت */
         .time-container {{
             display: flex;
             align-items: baseline;
@@ -276,7 +279,6 @@ html_code = f"""
             font-weight: 700;
         }}
 
-        /* متبقي على الصيف */
         .season-main {{
             font-size: clamp(1.5rem, 6vw, 2.4rem);
             font-weight: 700;
@@ -291,7 +293,6 @@ html_code = f"""
             margin-top: 2px;
         }}
 
-        /* صف المعلومات */
         .info-row {{
             display: flex;
             flex-direction: row;
