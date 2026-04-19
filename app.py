@@ -9,6 +9,7 @@ import base64
 
 st.set_page_config(page_title="ساعة الأرض - aale1164", layout="wide")
 
+# محاولة استيراد مكتبة الموقع الجغرافي (للكودين)
 try:
     from streamlit_js_eval import get_geolocation
     GEO_LIB_AVAILABLE = True
@@ -17,7 +18,7 @@ except ImportError:
 
 sa_tz = pytz.timezone('Asia/Riyadh')
 
-# --- دوال جلب البيانات (مع تخزين مؤقت) ---
+# ======================== دوال الكود رقم 1 ========================
 @st.cache_data(ttl=600)
 def fetch_weather_cached(lat, lon):
     try:
@@ -142,7 +143,7 @@ def get_image_base64(image_path):
     except:
         return None
 
-# --- إدارة حالة الموقع الجغرافي ---
+# ======================== إدارة الموقع الجغرافي (مشتركة) ========================
 if 'lat' not in st.session_state:
     st.session_state.lat, st.session_state.lon = 26.32, 43.97
     st.session_state.location_checked = False
@@ -194,22 +195,11 @@ if not st.session_state.location_checked and GEO_LIB_AVAILABLE:
 if not st.session_state.location_checked:
     st.session_state.location_checked = True
 
-# --- البيانات الأساسية ---
+# ======================== تحضير البيانات المشتركة ========================
 now = datetime.now(sa_tz)
 today = now.date()
 
-weekdays_ar = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
-weekdays_en = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-day_ar = weekdays_ar[today.weekday()]
-day_en = weekdays_en[today.weekday()]
-
-try:
-    h = Gregorian.fromdate(today).to_hijri()
-    hij_str = f"{h.day}/{h.month}/{h.year} هـ"
-except:
-    hij_str = "--/--/---- هـ"
-mil_str = f"{today.day}/{today.month}/{today.year} م"
-
+# --- بيانات الطقس والصلاة (للكود رقم 1) ---
 temp = fetch_weather_cached(st.session_state.lat, st.session_state.lon)
 weather_str = f"{temp}°C" if temp is not None else "--°C"
 
@@ -243,22 +233,34 @@ def get_next_prayer(prayer_dict, current_time):
 
 next_prayer_name, next_prayer_time = get_next_prayer(prayer_dict, now) if prayer_dict else ('الفجر', '--:--')
 
-prayer_json = json.dumps(prayer_dict, ensure_ascii=False)
+# --- بيانات إضافية للكود رقم 1 ---
+weekdays_ar = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
+weekdays_en = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+day_ar = weekdays_ar[today.weekday()]
+day_en = weekdays_en[today.weekday()]
+
+try:
+    h = Gregorian.fromdate(today).to_hijri()
+    hij_str = f"{h.day}/{h.month}/{h.year} هـ"
+except:
+    hij_str = "--/--/---- هـ"
+mil_str = f"{today.day}/{today.month}/{today.year} م"
 
 tawalee_list = get_tawalee_data()
 tawalee_json = json.dumps(tawalee_list, ensure_ascii=False)
 
 zodiac_current = get_zodiac_data()
-
 city_name = get_city_name_cached(st.session_state.lat, st.session_state.lon)
 
+# --- تجهيز الفيديو والصورة (للكود رقم 1) ---
 video_path = "ARRR1.mp4"
 video_base64 = get_video_base64(video_path)
 
 image_path = "TTTT1.jpg"
 image_base64 = get_image_base64(image_path)
 
-html_code = f"""
+# ======================== الكود رقم 1 (HTML الرئيسية) ========================
+html_code_main = f"""
 <!DOCTYPE html>
 <html dir="rtl">
 <head>
@@ -542,7 +544,6 @@ html_code = f"""
             </div>
         </div>
 
-        <!-- صف واحد يجمع الطواليع + البرج -->
         <div id="tawalee-container" class="tawalee-container"></div>
 
         <div class="city-card">
@@ -557,7 +558,6 @@ html_code = f"""
     </div>
 
     <script>
-        const prayerTimes = {prayer_json};
         const TIMEZONE = 'Asia/Riyadh';
         const tawaleeData = {tawalee_json};
         const zodiacCurrent = "{zodiac_current}";
@@ -566,7 +566,6 @@ html_code = f"""
             const container = document.getElementById('tawalee-container');
             container.innerHTML = '';
             
-            // إضافة بطاقات الطواليع الثلاث
             tawaleeData.forEach(item => {{
                 const div = document.createElement('div');
                 div.className = 'tawalee-item';
@@ -578,7 +577,6 @@ html_code = f"""
                 container.appendChild(div);
             }});
             
-            // إضافة بطاقة البرج كالبطاقة الرابعة
             const zodiacDiv = document.createElement('div');
             zodiacDiv.className = 'zodiac-item';
             zodiacDiv.innerHTML = `
@@ -631,4 +629,114 @@ html_code = f"""
 </html>
 """
 
-components.html(html_code, height=1000, scrolling=False)
+# ======================== الكود البسيط (HTML للتجربة) ========================
+def get_info_simple(lat, lon):
+    try:
+        geo_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&accept-language=ar"
+        city = requests.get(geo_url, headers={'User-Agent': 'FlatEarthClock/1.0'}, timeout=5).json().get('address', {}).get('city', 'مكانك الحالي')
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+        temp = requests.get(weather_url, timeout=5).json()['current_weather']['temperature']
+        return city, temp
+    except:
+        return "غير معروف", "--"
+
+def get_zodiac_simple():
+    m, d = date.today().month, date.today().day
+    if (m == 5 and d >= 21) or (m == 6 and d <= 20):
+        return "الجوزاء", "♊", "شدة القيظ"
+    if (m == 3 and d >= 21) or (m == 4 and d <= 19):
+        return "الحمل", "♈", "اعتدال الجو"
+    return "برج فلكي", "✨", "موسم خير"
+
+city_simple, temp_simple = get_info_simple(st.session_state.lat, st.session_state.lon)
+z_name_simple, z_icon_simple, z_desc_simple = get_zodiac_simple()
+
+video_url_simple = "https://raw.githubusercontent.com/aale1164/flat-earth-clock./main/ARRR1.mp4"
+
+html_code_simple = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body, html {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }}
+        #bgVideo {{
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            filter: brightness(0.4);
+            object-fit: cover;
+        }}
+        .main {{
+            position: relative;
+            z-index: 1;
+            color: white;
+            text-align: center;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-shadow: 2px 2px 15px black;
+        }}
+        .clock {{
+            font-size: 100px;
+            font-weight: bold;
+            margin: 0;
+        }}
+        .info-bar {{
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 20px;
+            border: 1px solid gold;
+        }}
+    </style>
+</head>
+<body>
+    <video autoplay loop muted playsinline id="bgVideo">
+        <source src="{video_url_simple}" type="video/mp4">
+    </video>
+
+    <div class="main">
+        <div class="clock" id="clock">00:00:00</div>
+        <div style="font-size: 25px;">📍 {city_simple} | 🌡️ {temp_simple}°C</div>
+        
+        <div class="info-bar">
+            {z_icon_simple} نحن الآن في برج <b>{z_name_simple}</b> - {z_desc_simple}
+        </div>
+        
+        <div style="margin-top: 50px; opacity: 0.7;">
+            🧭 منظور الأفق الثابت | @aale1164
+        </div>
+    </div>
+
+    <script>
+        function tick() {{
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB');
+        }}
+        setInterval(tick, 1000);
+        tick();
+    </script>
+</body>
+</html>
+"""
+
+# ======================== عرض التبويبين ========================
+tab1, tab2 = st.tabs(["🏠 الرئيسية (الكود رقم 1)", "🕒 النسخة البسيطة (تجربة)"])
+
+with tab1:
+    components.html(html_code_main, height=1000, scrolling=False)
+
+with tab2:
+    components.html(html_code_simple, height=900, scrolling=False)
